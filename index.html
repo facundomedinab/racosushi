@@ -32,11 +32,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .sidebar{padding:1.25rem 1.25rem;position:sticky;top:80px;max-height:calc(100vh - 90px);overflow-y:auto}
 
 /* ── TABS NAV ── */
-.tabs-nav{display:flex;gap:0;border-bottom:.5px solid var(--b1);margin-bottom:1.25rem;overflow-x:auto;scrollbar-width:none}
+.tabs-nav{display:flex;gap:.4rem;padding:.85rem 0 1rem;overflow-x:auto;scrollbar-width:none}
 .tabs-nav::-webkit-scrollbar{display:none}
-.tab-btn{background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;padding:.5rem .75rem .55rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-.5px;white-space:nowrap;transition:color .15s,border-color .15s;flex-shrink:0}
-.tab-btn:hover{color:var(--dim)}
-.tab-btn.on{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn{background:var(--s2);border:.5px solid var(--b2);color:var(--dim);font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:.4rem .85rem;cursor:pointer;border-radius:20px;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.tab-btn:hover{border-color:var(--accent2);color:var(--accent)}
+.tab-btn.on{background:var(--accent);color:#0a0a0a;border-color:var(--accent);font-weight:500}
 
 /* ── SECTION ── */
 .sec-header{padding:.75rem 0 .5rem;display:flex;justify-content:space-between;align-items:baseline;border-bottom:.5px solid var(--b1);margin-bottom:.6rem}
@@ -149,6 +149,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   .modal-btns{grid-template-columns:1fr}
 }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 </head>
 <body>
 
@@ -208,19 +209,25 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         <span class="sec-title">Tus datos</span>
       </div>
       <div class="fields">
-        <div class="field"><label>Nombre</label><input type="text" id="f-nombre" placeholder="Tu nombre" autocomplete="off"></div>
+        <div class="field"><label>Nombre <span style="color:#fb923c">*</span></label><input type="text" id="f-nombre" placeholder="Tu nombre" autocomplete="off"></div>
         <div class="field"><label>Teléfono <span style="color:#fb923c">*</span></label><input type="tel" id="f-tel" placeholder="11 2345-6789" autocomplete="off"></div>
         <div class="field" style="grid-column:1/-1">
           <label>Dirección</label>
           <div style="display:grid;grid-template-columns:1fr auto auto;gap:.4rem">
-            <input type="text" id="f-addr" placeholder="Calle" autocomplete="off">
-            <input type="text" id="f-numero" placeholder="Nro" autocomplete="off" style="width:64px">
+            <input type="text" id="f-addr" placeholder="Calle" autocomplete="off" oninput="buscarDir()">
+            <input type="text" id="f-numero" placeholder="Nro" autocomplete="off" style="width:64px" oninput="buscarDir()">
             <input type="text" id="f-dpto" placeholder="Dpto" autocomplete="off" style="width:72px">
           </div>
+          <!-- Sugerencias de dirección -->
+          <div id="addr-suggestions" style="display:none;background:var(--s2);border:.5px solid var(--b2);border-radius:6px;margin-top:.3rem;overflow:hidden"></div>
         </div>
         <div class="field" style="grid-column:1/-1">
           <label>Localidad</label>
-          <input type="text" id="f-localidad" placeholder="San Isidro, Martínez, Acassuso..." autocomplete="off">
+          <input type="text" id="f-localidad" placeholder="San Isidro, Martínez, Acassuso..." autocomplete="off" oninput="buscarDir()">
+        </div>
+        <!-- MAPA -->
+        <div style="grid-column:1/-1;display:none" id="map-wrap">
+          <div id="map" style="height:180px;border-radius:8px;overflow:hidden;border:.5px solid var(--b2);margin-top:.25rem"></div>
         </div>
         <div class="field" style="grid-column:1/-1">
           <label>Nota (opcional)</label>
@@ -598,12 +605,55 @@ function enviarPedidoDesdeModal(){
 function scrollTo(id){
   const el=document.getElementById(id)
   if(el)el.scrollIntoView({behavior:'smooth',block:'start'})
+  // Marcar pill activo
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'))
+  const idx={'sec-rolls':0,'sec-nigiris':1,'sec-extras':2,'sec-datos':3}[id]
+  const btns=document.querySelectorAll('.tab-btn')
+  if(btns[idx])btns[idx].classList.add('on')
 }
 
 buildList(ROLLS,rq,'r','list-rolls',true)
 buildList(NIGIRIS,nq,'n','list-nigiris',true)
 buildList(EXTRAS,eq,'e','list-extras',false)
 calcAll()
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map=null, marker=null, geoTimer=null
+
+function buscarDir(){
+  clearTimeout(geoTimer)
+  const calle=$('f-addr').value.trim()
+  const num=$('f-numero').value.trim()
+  const loc=$('f-localidad').value.trim()||'San Isidro'
+  if(!calle) return
+  const q=[calle,num,loc,'Buenos Aires','Argentina'].filter(Boolean).join(' ')
+  geoTimer=setTimeout(()=>geocodificar(q), 600)
+}
+
+function geocodificar(q){
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1&countrycodes=ar`)
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.length) return
+      const lat=parseFloat(data[0].lat), lng=parseFloat(data[0].lon)
+      mostrarMapa(lat,lng)
+    }).catch(()=>{})
+}
+
+function mostrarMapa(lat,lng){
+  $('map-wrap').style.display='block'
+  if(!map){
+    map=L.map('map',{zoomControl:true,attributionControl:false}).setView([lat,lng],16)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map)
+    const icon=L.divIcon({className:'',html:'<div style="width:14px;height:14px;background:var(--accent);border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.5)"></div>',iconSize:[14,14],iconAnchor:[7,7]})
+    marker=L.marker([lat,lng],{icon}).addTo(map)
+  } else {
+    map.setView([lat,lng],16)
+    marker.setLatLng([lat,lng])
+  }
+  setTimeout(()=>map.invalidateSize(),100)
+}
 </script>
 </body>
 </html>
