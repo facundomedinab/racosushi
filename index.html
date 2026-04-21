@@ -31,7 +31,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .menu-col{padding:1.25rem 1.5rem 4rem;border-right:.5px solid var(--b1)}
 .sidebar{padding:1.25rem 1.25rem;position:sticky;top:0;max-height:100vh;overflow-y:auto;align-self:start}
 /* ── TABS NAV ── */
-.tabs-nav{display:flex;gap:.4rem;padding:.85rem 0 1rem;overflow-x:auto;scrollbar-width:none}
+.tabs-nav{display:flex;gap:.4rem;padding:.6rem 1.5rem;overflow-x:auto;scrollbar-width:none;position:sticky;top:0;background:var(--bg);z-index:35;border-bottom:.5px solid var(--b1)}
 .tabs-nav::-webkit-scrollbar{display:none}
 .tab-btn{background:var(--s2);border:.5px solid var(--b2);color:var(--dim);font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:.4rem .85rem;cursor:pointer;border-radius:20px;white-space:nowrap;transition:all .15s;flex-shrink:0}
 .tab-btn:hover{border-color:var(--accent2);color:var(--accent)}
@@ -143,6 +143,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   .menu-col{border-right:none;padding:1rem 1rem 6rem}
   .sidebar{display:none}
   .mobile-bar{display:block}
+  #map-wrap{display:none !important}
 }
 @media(max-width:480px){
   .fields{grid-template-columns:1fr}
@@ -628,11 +629,14 @@ buildList(NIGIRIS,nq,'n','list-nigiris',true)
 buildList(EXTRAS,eq,'e','list-extras',false)
 calcAll()
 
-// Ajustar sidebar top al alto real del header
+// Ajustar sidebar top al alto real del header + tabs-nav
 window.addEventListener('load',()=>{
   const hh=document.querySelector('.header').offsetHeight
+  const nh=document.querySelector('.tabs-nav').offsetHeight
+  const nav=document.querySelector('.tabs-nav')
+  if(nav) nav.style.top=hh+'px'
   const sb=document.querySelector('.sidebar')
-  if(sb){sb.style.top=hh+'px';sb.style.maxHeight='calc(100vh - '+hh+'px)'}
+  if(sb){sb.style.top=(hh+nh)+'px';sb.style.maxHeight='calc(100vh - '+(hh+nh)+'px)'}
 })
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
