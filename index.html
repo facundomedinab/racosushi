@@ -499,10 +499,23 @@ function enviarPedidoConPago() {
 
 function copiarMonto(){
   const monto=$('confirm-total-val').textContent.replace(/\./g,'').replace('$','').trim()
-  navigator.clipboard.writeText(monto).then(()=>{
-    const btn=document.getElementById('btn-copiar-monto')
-    if(btn){btn.textContent='¡Copiado!';btn.style.background='#6fcf97';setTimeout(()=>{btn.textContent='Copiar';btn.style.background='#009ee3'},2000)}
-  }).catch(()=>{})
+  const btn=document.getElementById('btn-copiar-monto')
+  // Método compatible con todos los navegadores
+  const el=document.createElement('input')
+  el.value=monto
+  el.style.position='fixed'
+  el.style.opacity='0'
+  document.body.appendChild(el)
+  el.focus()
+  el.select()
+  try{
+    document.execCommand('copy')
+    if(btn){btn.textContent='Copiado ✓';btn.style.background='#6fcf97';setTimeout(()=>{btn.textContent='Copiar';btn.style.background='#009ee3'},2000)}
+  }catch(e){
+    // fallback: mostrar el monto en alerta
+    alert('Copiá este monto en MP: '+monto)
+  }
+  document.body.removeChild(el)
 }
 
 function mostrarVolverMP(){
