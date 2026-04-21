@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 /* ── LAYOUT DOS COLUMNAS ── */
 .layout{display:grid;grid-template-columns:1fr 340px;gap:0;max-width:1100px;margin:0 auto;align-items:start}
 .menu-col{padding:1.25rem 1.5rem 4rem;border-right:.5px solid var(--b1)}
-.sidebar{padding:1.25rem 1.25rem;position:sticky;top:80px;max-height:calc(100vh - 90px);overflow-y:auto}
+.sidebar{padding:1.25rem 1.25rem;position:sticky;top:0;max-height:100vh;overflow-y:auto;align-self:start}
 
 /* ── TABS NAV ── */
 .tabs-nav{display:flex;gap:.4rem;padding:.85rem 0 1rem;overflow-x:auto;scrollbar-width:none}
@@ -101,6 +101,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .pago-btn{padding:.5rem .3rem;border-radius:5px;border:.5px solid var(--b2);background:transparent;color:var(--muted);font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;line-height:1.4;text-align:center}
 .pago-btn.mp-on{background:#003d5c;color:#009ee3;border-color:#009ee3}
 .pago-btn.ef-on{background:#0a1f0a;color:#6fcf97;border-color:#6fcf97}
+#sb-mp-btn,#m-mp-btn{background:#003d5c;color:#009ee3;border-color:#005f8a}
 .btn-confirmar{width:100%;padding:.7rem;background:var(--accent);color:#0a0a0a;border:none;border-radius:6px;font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:500;cursor:pointer;transition:background .15s;margin-top:.5rem}
 .btn-confirmar:hover{background:#d4b87a}
 .btn-confirmar:disabled{background:var(--b2);color:var(--muted);cursor:default}
