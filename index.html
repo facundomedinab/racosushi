@@ -233,6 +233,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
           <button onclick="confirmarUbicacion()" id="map-confirm-btn" style="display:none;width:100%;margin-top:.4rem;padding:.5rem;background:var(--accent);color:#0a0a0a;border:none;border-radius:6px;font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;font-weight:500;cursor:pointer">
             ✓ Confirmar ubicación
           </button>
+          <div id="zona-error" style="display:none;margin-top:.5rem;background:#2a0a0a;border:.5px solid #f87171;border-radius:6px;padding:.6rem .75rem;font-size:.75rem;color:#f87171;line-height:1.5">
+            ⚠ Tu dirección está fuera de nuestra zona de entrega.<br>
+            <span style="color:var(--muted);font-size:.7rem">Cubrimos San Isidro, Martínez, Acassuso, Beccar y La Lucila.</span>
+          </div>
         </div>
         <div class="field" style="grid-column:1/-1">
           <label>Nota (opcional)</label>
@@ -687,19 +691,66 @@ function mostrarMapa(lat,lng,displayName){
 
 function confirmarUbicacion(){
   if(!lastGeoResult) return
-  // Armar dirección confirmada: lo que escribió el cliente + coords verificadas
   const calle=$('f-addr').value.trim()
   const num=$('f-numero').value.trim()
   const dpto=$('f-dpto').value.trim()
   const loc=$('f-localidad').value.trim()
   dirConfirmada=[calle,num,dpto,loc].filter(Boolean).join(', ')
-  // Feedback visual
+
+  // Verificar zona de cobertura
+  const enZona=dentroDeZona(lastGeoResult.lat,lastGeoResult.lng)
+
   $('map-confirm-btn').textContent='✓ Ubicación confirmada'
-  $('map-confirm-btn').style.background='#6fcf97'
+  $('map-confirm-btn').style.background=enZona?'#6fcf97':'#f87171'
   $('map-confirm-btn').style.color='#0a0a0a'
   $('map-confirm-btn').disabled=true
-  $('map-label').textContent='✓ '+dirConfirmada
-  $('map-label').style.color='#6fcf97'
+
+  if(enZona){
+    $('map-label').textContent='✓ '+dirConfirmada
+    $('map-label').style.color='#6fcf97'
+    // Habilitar botones de envío
+    const btnSB=$('sb-confirmar'),btnMB=$('mb-btn')
+    if(btnSB)btnSB.disabled=!metodoPago
+    if(btnMB)btnMB.disabled=false
+    $('zona-error').style.display='none'
+  } else {
+    $('map-label').textContent='⚠ Fuera de zona de entrega'
+    $('map-label').style.color='#f87171'
+    // Bloquear botones de envío
+    const btnSB=$('sb-confirmar'),btnMB=$('mb-btn')
+    if(btnSB){btnSB.disabled=true;btnSB.textContent='Fuera de zona de entrega'}
+    if(btnMB){btnMB.disabled=true;btnMB.textContent='Fuera de zona ✕'}
+    $('zona-error').style.display='block'
+  }
+}
+
+// Polígono de cobertura: San Isidro, Martínez, Acassuso, Beccar, La Lucila
+// Point-in-polygon con ray casting
+const ZONA_COBERTURA=[
+  [-34.4380,-58.5450], // La Lucila NW
+  [-34.4290,-58.5200], // La Lucila NE
+  [-34.4200,-58.5050], // Acassuso E
+  [-34.4050,-58.4900], // Martínez E
+  [-34.3900,-58.4750], // Beccar E
+  [-34.3750,-58.4700], // San Isidro NE
+  [-34.3600,-58.5050], // San Isidro N
+  [-34.3700,-58.5400], // San Isidro NW
+  [-34.3900,-58.5500], // Beccar W
+  [-34.4100,-58.5550], // Acassuso W
+  [-34.4250,-58.5550], // Acassuso SW
+  [-34.4380,-58.5450], // cierre
+]
+
+function dentroDeZona(lat,lng){
+  const poly=ZONA_COBERTURA
+  let inside=false
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][0],yi=poly[i][1]
+    const xj=poly[j][0],yj=poly[j][1]
+    const intersect=((yi>lng)!==(yj>lng))&&(lat<(xj-xi)*(lng-yi)/(yj-yi)+xi)
+    if(intersect)inside=!inside
+  }
+  return inside
 }
 </script>
 </body>
