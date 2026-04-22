@@ -23,7 +23,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);overflow-x:hi
 nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.25rem 2.5rem;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(8,8,8,.95),transparent)}
 .nav-brand{font-family:var(--mono);font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
 .nav-links{display:flex;gap:2rem;list-style:none}
-.nav-links a{font-family:var(--mono);font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color .2s}
+.nav-links a{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color .2s}
 .nav-links a:hover{color:var(--ink)}
 .nav-cta{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:var(--gold);color:#080808;padding:.4rem 1rem;border-radius:2px;text-decoration:none;font-weight:500;transition:background .2s}
 .nav-cta:hover{background:#d4b87a}
@@ -32,10 +32,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.25rem 2.5rem;displ
 
 /* ── HERO ── */
 .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding:0 2.5rem 5rem;position:relative;overflow:hidden}
-.hero-bg{position:absolute;inset:0;z-index:0}
-.hero-bg img{width:100%;height:100%;object-fit:cover;filter:brightness(.35)}
-.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(8,8,8,1) 0%,rgba(8,8,8,.5) 40%,transparent 80%)}
-.hero-content{position:relative;z-index:1;max-width:680px}
+.hero-bg{position:absolute;inset:0;z-index:0;background:var(--bg)}
+.hero-bg::after{content:'';position:absolute;inset:0}
+.hero-content{position:relative;z-index:1;max-width:680px;padding-top:8rem}
 .hero-tag{font-family:var(--mono);font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem}
 .hero-tag::before{content:'';width:2rem;height:1px;background:var(--gold)}
 .hero h1{font-family:var(--mono);font-size:clamp(2.4rem,5.5vw,4.5rem);font-weight:500;line-height:1.05;letter-spacing:.02em;text-transform:uppercase;margin-bottom:1.5rem}
@@ -132,7 +131,15 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
   nav{padding:1rem 1.25rem}
   .nav-links,.nav-cta-wrap{display:none}
   .nav-ham{display:flex}
-  .hero{padding:0 1.25rem 4rem}
+  .hero{padding:0 1.25rem 4rem;justify-content:center;align-items:center;text-align:center}
+  .hero-bg img{display:none}
+  .hero-bg::after{background:none}
+  .hero-content{max-width:100%}
+  .hero-tag{justify-content:center}
+  .hero-tag::before{display:none}
+  .hero-sub{max-width:100%}
+  .hero-btns{justify-content:center}
+  .hero-scroll{display:none}
   section{padding:5rem 1.25rem}
   .historia-inner,.zona-inner,.contacto-inner{grid-template-columns:1fr;gap:2.5rem}
   .historia-img{display:none}
@@ -164,9 +171,7 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
 
 <!-- HERO -->
 <section class="hero" id="inicio">
-  <div class="hero-bg">
-    <img src="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=1600&q=80" alt="Sushi">
-  </div>
+  <div class="hero-bg" style="background:var(--bg)"></div>
   <div class="hero-content">
     <div class="hero-tag">San Isidro · Delivery</div>
     <h1>Sushi con<br><span class="c-red">carác</span><span class="c-blue">ter</span></h1>
@@ -280,18 +285,22 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
     <div class="fade-up">
       <div class="section-tag">Días de servicio</div>
       <h2 class="section-title">Cuándo<br><span class="c-lan">pedimos</span></h2>
-      <div class="dias-grid">
+      <div class="dias-grid" style="grid-template-columns:repeat(2,1fr)">
         <div class="dia-card activo">
           <div class="dia-nombre">Jueves</div>
-          <div class="dia-hora">19:00 — 22:00</div>
+          <div class="dia-hora">19:00 — 21:00</div>
         </div>
         <div class="dia-card activo">
           <div class="dia-nombre">Viernes</div>
-          <div class="dia-hora">19:00 — 22:00</div>
+          <div class="dia-hora">19:00 — 21:00</div>
         </div>
         <div class="dia-card activo">
           <div class="dia-nombre">Sábado</div>
-          <div class="dia-hora">19:00 — 22:00</div>
+          <div class="dia-hora">19:00 — 21:00</div>
+        </div>
+        <div class="dia-card activo">
+          <div class="dia-nombre">Domingo</div>
+          <div class="dia-hora">19:00 — 21:00</div>
         </div>
       </div>
       <div style="margin-top:2rem">
@@ -318,14 +327,7 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
           </div>
           <div class="contact-link-arr">→</div>
         </a>
-        <a href="https://racosushi.com.ar/menu.html" class="contact-link">
-          <div class="contact-link-icon">🍣</div>
-          <div class="contact-link-text">
-            <div class="contact-link-label">Pedidos online</div>
-            <div class="contact-link-val">racosushi.com.ar/menu</div>
-          </div>
-          <div class="contact-link-arr">→</div>
-        </a>
+
       </div>
     </div>
   </div>
