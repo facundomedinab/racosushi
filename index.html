@@ -175,10 +175,10 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
 .ing-carousel-wrap{position:relative;display:flex;align-items:center;gap:1rem}
 .ing-track-wrap{overflow:hidden;flex:1}
 .ing-track{display:flex;gap:0;transition:transform .4s ease}
-.ing-card{flex:0 0 33.333%;background:#0c0c0c;overflow:hidden;min-width:0}
-.ing-img-wrap{overflow:hidden;height:420px;background:#2a2a2a}
-.ing-img-wrap img{width:100%;height:100%;object-fit:contain;filter:brightness(.95);transition:all .5s ease}
-.ing-card:hover .ing-img-wrap img{filter:brightness(1);transform:scale(1.03)}
+.ing-card{flex:0 0 25%;background:#0c0c0c;overflow:hidden;min-width:0}
+.ing-img-wrap{overflow:hidden;height:520px;background:#1e1e1e}
+.ing-img-wrap img{width:100%;height:100%;object-fit:contain;filter:brightness(.98);transition:transform .5s ease}
+.ing-card:hover .ing-img-wrap img{transform:scale(1.04)}
 .ing-info{padding:.85rem 1rem;border-top:.5px solid var(--border)}
 .ing-name{font-family:var(--mono);font-size:.82rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
 .ing-arrow{background:transparent;border:.5px solid var(--border);color:var(--dim);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const cards = track.querySelectorAll('.ing-card')
   if(!cards.length) return
   let current = 0
-  const visible = () => window.innerWidth <= 480 ? 1 : window.innerWidth <= 768 ? 2 : 3
+  const visible = () => window.innerWidth <= 480 ? 1 : window.innerWidth <= 768 ? 2 : 4
   const max = () => Math.max(0, cards.length - visible())
 
   // Crear dots
