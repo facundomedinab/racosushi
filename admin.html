@@ -478,10 +478,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   <!-- ORDEN DE COMPRA -->
   <div id="tab-compras" class="panel">
     <div id="compras-wrap">
-      <div style="font-size:.78rem;color:var(--dim);margin-bottom:1rem">
-        Basada en las órdenes pendientes de la jornada actual
+      <!-- SIMULADOR -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+        <span style="font-size:.78rem;color:var(--dim)">Ingresá cuántos de cada producto querés preparar</span>
+        <div style="display:flex;gap:.4rem">
+          <button class="btn ghost" style="padding:.3rem .65rem;font-size:.6rem" onclick="resetSimCompras()">Limpiar</button>
+          <button class="btn ghost" style="padding:.3rem .65rem;font-size:.6rem" onclick="copiarListaCompras()">↓ Copiar lista</button>
+        </div>
       </div>
-      <div id="compras-lista"></div>
+
+      <!-- CANTIDADES -->
+      <div class="slabel" style="margin-top:0">Rolls <span>8 piezas c/u</span></div>
+      <div id="sim-rolls" style="display:flex;flex-direction:column;gap:.3rem"></div>
+      <div class="slabel" style="margin-top:1rem">Nigiris <span>por pieza</span></div>
+      <div id="sim-nigiris" style="display:flex;flex-direction:column;gap:.3rem"></div>
+
+      <!-- RESULTADO -->
+      <div id="compras-resultado" style="margin-top:1.5rem"></div>
     </div>
   </div>
 
@@ -2047,73 +2060,110 @@ function resetInsumos(){
 }
 
 // ── RENDER ORDEN DE COMPRA ─────────────────────────────────────
-function renderCompras(){
-  const el = document.getElementById('compras-lista')
-  if(!el) return
-  const ords = getOrdenes().filter(o=>!o.listo)
-  if(!ords.length){
-    el.innerHTML = '<div class="empty-hist">No hay órdenes pendientes</div>'
-    return
-  }
+// ── SIMULADOR DE COMPRAS ─────────────────────────────────────
+const simQ = { r: new Array(RECETAS_ROLLS.length).fill(0), n: new Array(RECETAS_NIGIRIS.length).fill(0) }
 
-  // Sumar gramos necesarios por insumo
-  const totales = {} // key -> gramos totales
+function renderCompras(){
+  // Build input rows for rolls
+  const rollsEl = document.getElementById('sim-rolls')
+  const nigEl   = document.getElementById('sim-nigiris')
+  if(!rollsEl) return
+
+  if(!rollsEl.children.length){
+    // First render — build inputs
+    rollsEl.innerHTML = RECETAS_ROLLS.map((r,i)=>`
+      <div class="item" style="grid-template-columns:1fr auto auto">
+        <div><div class="iname">${r.n}</div>
+          <div class="imeta" style="color:var(--muted);font-size:.68rem">${money(r.pv)} · ${money(costoReceta(r,'roll'))} costo</div>
+        </div>
+        <div class="ctrl">
+          <button class="cbtn" onclick="simChg('r',${i},-1)">−</button>
+          <span class="qval" id="sim-r-q-${i}">0</span>
+          <button class="cbtn" onclick="simChg('r',${i},1)">+</button>
+        </div>
+      </div>`).join('')
+
+    nigEl.innerHTML = RECETAS_NIGIRIS.map((n,i)=>`
+      <div class="item" style="grid-template-columns:1fr auto auto">
+        <div><div class="iname">${n.n}</div>
+          <div class="imeta" style="color:var(--muted);font-size:.68rem">${money(n.pv)} · ${money(costoReceta(n,'nigiri'))} costo</div>
+        </div>
+        <div class="ctrl">
+          <button class="cbtn" onclick="simChg('n',${i},-1)">−</button>
+          <span class="qval" id="sim-n-q-${i}">0</span>
+          <button class="cbtn" onclick="simChg('n',${i},1)">+</button>
+        </div>
+      </div>`).join('')
+  }
+  calcCompras()
+}
+
+function simChg(tipo, i, delta){
+  simQ[tipo][i] = Math.max(0, simQ[tipo][i] + delta)
+  document.getElementById('sim-'+tipo+'-q-'+i).textContent = simQ[tipo][i]
+  calcCompras()
+}
+
+function resetSimCompras(){
+  simQ.r.fill(0); simQ.n.fill(0)
+  RECETAS_ROLLS.forEach((_,i)=>{ const el=document.getElementById('sim-r-q-'+i); if(el) el.textContent='0' })
+  RECETAS_NIGIRIS.forEach((_,i)=>{ const el=document.getElementById('sim-n-q-'+i); if(el) el.textContent='0' })
+  calcCompras()
+}
+
+function calcCompras(){
+  const totales = {}
   const add = (k, g) => { totales[k] = (totales[k]||0) + g }
 
-  ords.forEach(o => {
-    // Rolls
-    RECETAS_ROLLS.forEach((rec, i) => {
-      const q = o.rq[i] || 0
-      if(!q) return
-      rec.ingredientes.forEach(ing => {
-        const g = ing.g || ing[1] || 0
-        const k = ing.k || ing[0]
-        if(k === 'shari' || k === 'shari_n') return // no se compra shari directo
-        if(k.startsWith('salsa_')) return // salsas se manejan aparte
-        add(k, g * q)
-      })
-      // Shari → arroz
-      add('arroz', 120 * q / 1.8)     // 120g cocido → ~67g seco
-      add('nori', 1 * q)
+  RECETAS_ROLLS.forEach((rec, i) => {
+    const q = simQ.r[i]
+    if(!q) return
+    rec.ingredientes.forEach(ing => {
+      const k = ing.k, g = ing.g || 0
+      if(k==='shari'||k==='shari_n'||k.startsWith('salsa_')) return
+      add(k, g * q)
     })
-    // Nigiris
-    RECETAS_NIGIRIS.forEach((rec, i) => {
-      const q = o.nq[i] || 0
-      if(!q) return
-      rec.ingredientes.forEach(ing => {
-        const g = ing.g || ing[1] || 0
-        const k = ing.k || ing[0]
-        if(k === 'shari_n' || k === 'shari') return
-        if(k.startsWith('salsa_')) return
-        add(k, g * q)
-      })
-      add('arroz', 15 * q / 1.8)
-    })
+    add('arroz', Math.ceil(120 * q / 1.8))
+    add('nori', q)
   })
 
-  // Agregar packaging
-  const totalPedidos = ords.length
-  const packCosto = totalPedidos * 240
+  RECETAS_NIGIRIS.forEach((rec, i) => {
+    const q = simQ.n[i]
+    if(!q) return
+    rec.ingredientes.forEach(ing => {
+      const k = ing.k, g = ing.g || 0
+      if(k==='shari'||k==='shari_n'||k.startsWith('salsa_')) return
+      add(k, g * q)
+    })
+    add('arroz', Math.ceil(15 * q / 1.8))
+  })
 
-  // Agrupar por proveedor
+  const el = document.getElementById('compras-resultado')
+  if(!el) return
+  const totalRolls = simQ.r.reduce((a,v)=>a+v,0)
+  const totalNig   = simQ.n.reduce((a,v)=>a+v,0)
+  if(!totalRolls && !totalNig){ el.innerHTML=''; return }
+
+  // Group by proveedor
   const porProv = {}
-  Object.entries(totales).forEach(([k, g]) => {
-    if(!INSUMOS_BASE[k]) return
+  Object.entries(totales).forEach(([k,g])=>{
+    if(!INSUMOS_BASE[k]||g<=0) return
     const ins = INSUMOS_BASE[k]
-    const prov = ins.prov
-    if(!porProv[prov]) porProv[prov] = []
-    porProv[prov].push({k, n:ins.n, g:Math.ceil(g), costo: Math.ceil(getP(k)*g)})
+    if(!porProv[ins.prov]) porProv[ins.prov]=[]
+    porProv[ins.prov].push({n:ins.n, g:Math.ceil(g), costo:Math.ceil(getP(k)*g)})
   })
-
-  let html = `<div style="font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:.08em;margin-bottom:1rem;text-transform:uppercase">${ords.length} orden${ords.length>1?'es':''} pendiente${ords.length>1?'s':''}</div>`
 
   let totalGeneral = 0
-  Object.entries(porProv).sort().forEach(([prov, items]) => {
-    const subtotal = items.reduce((a,i)=>a+i.costo,0)
-    totalGeneral += subtotal
+  let html = `<div style="font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.75rem;text-transform:uppercase">
+    ${totalRolls ? totalRolls+' roll'+(totalRolls>1?'s':'') : ''}${totalRolls&&totalNig?' · ':''}${totalNig ? totalNig+' nigiri'+(totalNig>1?'s':'') : ''}
+  </div>`
+
+  Object.entries(porProv).sort().forEach(([prov, items])=>{
+    const sub = items.reduce((a,i)=>a+i.costo,0)
+    totalGeneral += sub
     html += `<div class="compra-section">
       <div class="compra-proveedor">🛒 ${prov}</div>`
-    items.sort((a,b)=>a.n.localeCompare(b.n)).forEach(it => {
+    items.sort((a,b)=>a.n.localeCompare(b.n)).forEach(it=>{
       html += `<div class="compra-row">
         <span class="compra-ing">${it.n}</span>
         <div class="compra-detalle">
@@ -2122,42 +2172,32 @@ function renderCompras(){
         </div>
       </div>`
     })
-    html += `<div class="compra-total"><span>Subtotal ${prov}</span><span>${money(subtotal)}</span></div>
-    </div>`
+    html += `<div class="compra-total"><span>Subtotal ${prov}</span><span>${money(sub)}</span></div></div>`
   })
 
-  totalGeneral += packCosto
-  html += `<div class="compra-section">
-    <div class="compra-proveedor">📦 Packaging</div>
-    <div class="compra-row">
-      <span class="compra-ing">Packaging por pedido (${totalPedidos} pedidos)</span>
-      <div class="compra-detalle"><span class="compra-g">${totalPedidos}u</span><span class="compra-costo">${money(packCosto)}</span></div>
-    </div>
-    <div class="compra-total"><span>Subtotal Packaging</span><span>${money(packCosto)}</span></div>
-  </div>`
-
   html += `<div style="background:rgba(201,169,110,.08);border:.5px solid var(--accent2);border-radius:7px;padding:.85rem 1rem;margin-top:.5rem;display:flex;justify-content:space-between;align-items:center">
-    <span style="font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Total estimado de compras</span>
+    <span style="font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Total estimado</span>
     <span style="font-family:var(--mono);font-size:1.1rem;font-weight:500;color:var(--accent)">${money(totalGeneral)}</span>
   </div>`
-
-  html += `<button class="btn ghost" style="width:100%;margin-top:.75rem" onclick="copiarListaCompras()">Copiar lista de compras</button>`
 
   el.innerHTML = html
 }
 
 function copiarListaCompras(){
-  const ords = getOrdenes().filter(o=>!o.listo)
-  if(!ords.length){ showToast('No hay órdenes pendientes'); return }
-  const el = document.getElementById('compras-lista')
-  let txt = `🛒 COMPRAS · ${today()}\n${ords.length} órdenes pendientes\n${'─'.repeat(30)}\n`
-  el.querySelectorAll('.compra-section').forEach(sec => {
-    const prov = sec.querySelector('.compra-proveedor')?.textContent?.trim() || ''
-    txt += `\n${prov}\n`
-    sec.querySelectorAll('.compra-row').forEach(row => {
-      const ing = row.querySelector('.compra-ing')?.textContent?.trim() || ''
-      const g = row.querySelector('.compra-g')?.textContent?.trim() || ''
-      const c = row.querySelector('.compra-costo')?.textContent?.trim() || ''
+  const totalRolls = simQ.r.reduce((a,v)=>a+v,0)
+  const totalNig   = simQ.n.reduce((a,v)=>a+v,0)
+  if(!totalRolls && !totalNig){ showToast('Ingresá cantidades primero'); return }
+  let txt = `🛒 LISTA DE COMPRAS · ${today()}\n`
+  txt += `${'─'.repeat(30)}\n`
+  RECETAS_ROLLS.forEach((r,i)=>{ if(simQ.r[i]) txt += `  ${simQ.r[i]}x ${r.n}\n` })
+  RECETAS_NIGIRIS.forEach((n,i)=>{ if(simQ.n[i]) txt += `  ${simQ.n[i]}x ${n.n}\n` })
+  txt += `${'─'.repeat(30)}\n`
+  document.querySelectorAll('#compras-resultado .compra-section').forEach(sec=>{
+    txt += `\n${sec.querySelector('.compra-proveedor')?.textContent?.trim()||''}\n`
+    sec.querySelectorAll('.compra-row').forEach(row=>{
+      const ing = row.querySelector('.compra-ing')?.textContent?.trim()||''
+      const g   = row.querySelector('.compra-g')?.textContent?.trim()||''
+      const c   = row.querySelector('.compra-costo')?.textContent?.trim()||''
       txt += `  ${ing}: ${g} — ${c}\n`
     })
   })
