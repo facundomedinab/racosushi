@@ -467,10 +467,11 @@ function goTab(name,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'))
   $('tab-'+name).classList.add('on')
   if(btn)btn.classList.add('on')
-  if(name==='ordenes')renderOrdenes()
-  if(name==='acumulado')renderAcumulado()
+  if(name==='ordenes'){renderOrdenes();updateUserMenu()}
+  if(name==='acumulado'){renderAcumulado();updateUserMenu()}
   if(name==='stats')renderStats()
   if(name==='ruta')renderRuta()
+  if(name==='stock')renderStock()
 }
 
 // Maps
@@ -1474,10 +1475,6 @@ function toggleProd(key,on){
   const s=getStock();s[key]=on;saveStock(s);renderStock()
   showToast(on?'Producto activo ✓':'Producto desactivado')
 }
-
-// Extender goTab para stock
-const _gt=goTab
-window.goTab=function(name,btn){_gt(name,btn);if(name==='stock')renderStock();if(name==='ordenes'||name==='acumulado')updateUserMenu()}
 
 if(sessionStorage.getItem('raco_auth')===PASS){
   document.getElementById('login-wrap').classList.add('hidden')
