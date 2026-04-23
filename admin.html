@@ -587,27 +587,6 @@ const SECCION_TABS = {
 function goSeccion(name, btn){
   document.querySelectorAll('.seccion-btn').forEach(b=>b.classList.remove('on'))
   btn.classList.add('on')
-  // show/hide tab navs
-  Object.entries(SECCION_TABS).forEach(([sec,[navId, tabs]])=>{
-    document.getElementById(navId).style.display = sec===name ? 'flex' : 'none'
-  })
-  // show first tab of section
-  const firstTab = SECCION_TABS[name][1][0]
-  const tabNav = document.getElementById(SECCION_TABS[name][0])
-  tabNav.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'))
-  tabNav.querySelector('.tab').classList.add('on')
-  goTab(firstTab, tabNav.querySelector('.tab'))
-}
-
-// Secciones
-const SECCION_TABS = {
-  jornada: ['tabs-jornada', ['nueva','ordenes','acumulado','ruta']],
-  stats:   ['tabs-stats',   ['stats']],
-  cocina:  ['tabs-cocina',  ['stock','costos','insumos','compras']],
-}
-function goSeccion(name, btn){
-  document.querySelectorAll('.seccion-btn').forEach(b=>b.classList.remove('on'))
-  btn.classList.add('on')
   Object.keys(SECCION_TABS).forEach(sec=>{
     document.getElementById(SECCION_TABS[sec][0]).style.display = sec===name ? 'flex' : 'none'
   })
@@ -1759,28 +1738,28 @@ const RECETAS_NIGIRIS = [
 
 const RECETAS_SALSAS = [
   {n:'Ají Amarillo Nikkei',  k:'aji',     batch:100, usoRoll:10, usoNig:5,  ingredientes:[
-    {k:'kewpie',65},{k:'aji_pasta',30},{k:'lima',3},{k:'soja',1.5},{k:'sesamo_ac',0.5}
+    {k:'kewpie',g:65},{k:'aji_pasta',g:30},{k:'lima',g:3},{k:'soja',g:1.5},{k:'sesamo_ac',g:0.5}
   ]},
   {n:'Chalaquita Nikkei',    k:'chalaqui',batch:100, usoRoll:10, usoNig:8,  ingredientes:[
-    {k:'cebolla',60},{k:'aji_pasta',15},{k:'lima',15},{k:'cilantro',5},{k:'oliva',3},{k:'pimienta',2}
+    {k:'cebolla',g:60},{k:'aji_pasta',g:15},{k:'lima',g:15},{k:'cilantro',g:5},{k:'oliva',g:3},{k:'pimienta',g:2}
   ]},
   {n:'Rocoto Mayo',          k:'rocoto',  batch:100, usoRoll:10, usoNig:5,  ingredientes:[
-    {k:'kewpie',55},{k:'rocoto_pasta',35},{k:'ajo',1.5},{k:'cebollino',0.5},{k:'vinagre',2},{k:'galleta',3},{k:'qfresco',3}
+    {k:'kewpie',g:55},{k:'rocoto_pasta',g:35},{k:'ajo',g:1.5},{k:'cebollino',g:0.5},{k:'vinagre',g:2},{k:'galleta',g:3},{k:'qfresco',g:3}
   ]},
   {n:'Maracuyá Agridulce',   k:'marac',   batch:100, usoRoll:12, usoNig:8,  ingredientes:[
-    {k:'maracuya',30},{k:'azucar_r',20},{k:'soja',6},{k:'vinagre',3},{k:'maicena',1}
+    {k:'maracuya',g:30},{k:'azucar_r',g:20},{k:'soja',g:6},{k:'vinagre',g:3},{k:'maicena',g:1}
   ]},
   {n:'Kimchi Mayo',          k:'kimchi',  batch:100, usoRoll:10, usoNig:5,  ingredientes:[
-    {k:'kewpie',70},{k:'gochujang',20},{k:'soja',5},{k:'sesamo_ac',2},{k:'miel',2},{k:'sriracha',1}
+    {k:'kewpie',g:70},{k:'gochujang',g:20},{k:'soja',g:5},{k:'sesamo_ac',g:2},{k:'miel',g:2},{k:'sriracha',g:1}
   ]},
   {n:'Salsa Acevichada',     k:'acevich', batch:100, usoRoll:12, usoNig:6,  ingredientes:[
-    {k:'kewpie',60},{k:'aji_pasta',25},{k:'lima',7},{k:'lima',3},{k:'soja',1},{k:'sesamo_ac',0.5},{k:'hondashi',0.5}
+    {k:'kewpie',g:60},{k:'aji_pasta',g:25},{k:'lima',g:7},{k:'lima',g:3},{k:'soja',g:1},{k:'sesamo_ac',g:0.5},{k:'hondashi',g:0.5}
   ]},
   {n:'Spicy Mayo Nikkei',    k:'spicy',   batch:100, usoRoll:10, usoNig:5,  ingredientes:[
-    {k:'kewpie',70},{k:'sriracha',25},{k:'lima',3},{k:'sesamo_ac',2}
+    {k:'kewpie',g:70},{k:'sriracha',g:25},{k:'lima',g:3},{k:'sesamo_ac',g:2}
   ]},
   {n:'Furikake Frutos Secos',k:'furik',   batch:90,  usoRoll:8,  usoNig:5,  ingredientes:[
-    {k:'mani',50},{k:'almendras',15},{k:'nueces',10},{k:'sesamo_n',15},{k:'panko',10}
+    {k:'mani',g:50},{k:'almendras',g:15},{k:'nueces',g:10},{k:'sesamo_n',g:15},{k:'panko',g:10}
   ]},
 ]
 
