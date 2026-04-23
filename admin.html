@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Raco Sushi · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -18,9 +18,7 @@
 .login-btn{background:#c9a96e;color:#080808;border:none;border-radius:4px;padding:.65rem 2rem;font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500;cursor:pointer;transition:background .2s;width:280px}
 .login-btn:hover{background:#d4b87a}
 .login-error{font-size:.72rem;color:#f87171;font-family:'DM Mono',monospace;display:none}
-
-
-/* ── ADMIN HEADER ── */
+/* ADMIN HEADER */
 .admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
 .user-menu-wrap{position:relative}
 .user-btn{background:var(--surface);border:.5px solid var(--border2);border-radius:5px;padding:.35rem .75rem;font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:all .15s}
@@ -39,7 +37,21 @@
 .ud-divider{height:.5px;background:var(--border2);margin:.5rem 0}
 .ud-logout{width:100%;margin-top:.4rem;padding:.45rem;background:transparent;border:.5px solid var(--border2);border-radius:4px;font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--red);cursor:pointer;transition:all .15s}
 .ud-logout:hover{background:#1a0808;border-color:var(--red)}
-
+/* STOCK */
+.stock-section{margin-bottom:1.75rem}
+.stock-section-title{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:.5px solid var(--border)}
+.stock-item{display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;background:var(--surface);border:.5px solid var(--border);border-radius:6px;margin-bottom:.35rem;transition:all .15s}
+.stock-item.off{opacity:.45}
+.stock-item-left{display:flex;flex-direction:column;gap:.15rem}
+.stock-item-name{font-size:.85rem;font-weight:500}
+.stock-item-sub{font-size:.68rem;color:var(--muted)}
+.stock-toggle{position:relative;width:38px;height:20px;flex-shrink:0}
+.stock-toggle input{opacity:0;width:0;height:0;position:absolute}
+.stock-slider{position:absolute;inset:0;background:var(--border2);border-radius:10px;cursor:pointer;transition:background .2s}
+.stock-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#555;border-radius:50%;transition:all .2s}
+.stock-toggle input:checked + .stock-slider{background:var(--green)}
+.stock-toggle input:checked + .stock-slider::before{transform:translateX(18px);background:#fff}
+.stock-badge-off{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--red);background:#1a0808;border:.5px solid #3a1010;border-radius:3px;padding:.1rem .4rem;margin-left:.5rem}
 /* APP */
 .app-wrap{display:none}
 .app-wrap.visible{display:block}
@@ -53,7 +65,7 @@
   --green:#6fcf97;--red:#eb5757;--blue:#60a5fa;
   --sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
 }
-html{font-size:15px}
+html{font-size:14px}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding-bottom:6rem}
 .app{max-width:640px;margin:0 auto;padding:1.5rem 1rem}
 .logo{font-family:var(--mono);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:1.25rem}
@@ -175,23 +187,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 /* toast */
 .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(4px);background:var(--surface2);border:.5px solid var(--border2);border-radius:6px;padding:.55rem 1rem;font-family:var(--mono);font-size:.7rem;color:var(--text2);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:99;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ── STOCK ── */
-.stock-section{margin-bottom:1.75rem}
-.stock-section-title{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:.5px solid var(--border)}
-.stock-item{display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;background:var(--surface);border:.5px solid var(--border);border-radius:6px;margin-bottom:.35rem;transition:all .15s}
-.stock-item.off{opacity:.45;border-color:var(--border)}
-.stock-item-left{display:flex;flex-direction:column;gap:.15rem}
-.stock-item-name{font-size:.85rem;font-weight:500}
-.stock-item-sub{font-size:.68rem;color:var(--muted)}
-.stock-toggle{position:relative;width:38px;height:20px;flex-shrink:0}
-.stock-toggle input{opacity:0;width:0;height:0;position:absolute}
-.stock-slider{position:absolute;inset:0;background:var(--border2);border-radius:10px;cursor:pointer;transition:background .2s}
-.stock-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#555;border-radius:50%;transition:all .2s}
-.stock-toggle input:checked + .stock-slider{background:var(--green)}
-.stock-toggle input:checked + .stock-slider::before{transform:translateX(18px);background:#fff}
-.stock-badge-off{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--red);background:#1a0808;border:.5px solid #3a1010;border-radius:3px;padding:.1rem .4rem;margin-left:.5rem}
-
 /* ruta */
 .ruta-card{background:var(--surface);border:.5px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:1.25rem}
 .ruta-origen{display:flex;align-items:center;gap:.65rem;padding:.75rem 1rem;border-bottom:.5px solid var(--border)}
@@ -237,7 +232,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   <div class="login-brand">Raco Sushi</div>
   <div class="login-title">Panel de Administración</div>
   <div class="login-sub">Ingresá tu contraseña para continuar</div>
-  <input type="password" class="login-input" id="pwd-input" placeholder="••••••••••" 
+  <input type="password" class="login-input" id="pwd-input" placeholder="••••••••••"
     onkeydown="if(event.key==='Enter')checkPwd()">
   <button class="login-btn" onclick="checkPwd()">Ingresar →</button>
   <div class="login-error" id="login-error">Contraseña incorrecta</div>
@@ -245,43 +240,40 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 
 <!-- APP ÓRDENES -->
 <div class="app-wrap" id="app-wrap">
-
-<div class="app">
-  <div class="admin-header">
-    <div class="logo">Raco Sushi · Admin</div>
-    <div class="user-menu-wrap">
-      <button class="user-btn" onclick="toggleUserMenu()">
-        <span id="user-summary">Jornada</span>
-        <span class="user-arrow" id="user-arrow">▾</span>
-      </button>
-      <div class="user-dropdown" id="user-dropdown">
-        <div class="ud-title">Resumen de jornada</div>
-        <div class="ud-row"><span>Total órdenes</span><span id="ud-total-ord" class="ud-val">—</span></div>
-        <div class="ud-row"><span>Pendientes</span><span id="ud-pendientes" class="ud-val">—</span></div>
-        <div class="ud-row"><span>Listos</span><span id="ud-listos" class="ud-val">—</span></div>
-        <div class="ud-divider"></div>
-        <div class="ud-row"><span>Total recaudado</span><span id="ud-total" class="ud-val accent">—</span></div>
-        <div class="ud-row"><span>Cobrado por MP</span><span id="ud-mp-ok" class="ud-val green">—</span></div>
-        <div class="ud-row"><span>MP pendiente</span><span id="ud-mp" class="ud-val blue">—</span></div>
-        <div class="ud-row"><span>Cobrado efectivo</span><span id="ud-efectivo" class="ud-val" style="color:#fcd34d">—</span></div>
-        <div class="ud-divider"></div>
-        <div class="ud-row"><span>Alias MP</span><span class="ud-val">facundomb.mp</span></div>
-        <div class="ud-row"><span>WhatsApp</span><span class="ud-val">3816174410</span></div>
-        <div class="ud-divider"></div>
-        <button class="ud-logout" onclick="cerrarSesion()">Cerrar sesión →</button>
+  <div class="app">
+    <div class="admin-header">
+      <div class="logo">Raco Sushi · Admin</div>
+      <div class="user-menu-wrap">
+        <button class="user-btn" onclick="toggleUserMenu()">
+          <span id="user-summary">Jornada</span>
+          <span class="user-arrow" id="user-arrow">▾</span>
+        </button>
+        <div class="user-dropdown" id="user-dropdown">
+          <div class="ud-title">Resumen de jornada</div>
+          <div class="ud-row"><span>Total órdenes</span><span id="ud-total-ord" class="ud-val">—</span></div>
+          <div class="ud-row"><span>Pendientes</span><span id="ud-pendientes" class="ud-val">—</span></div>
+          <div class="ud-row"><span>Listos</span><span id="ud-listos" class="ud-val">—</span></div>
+          <div class="ud-divider"></div>
+          <div class="ud-row"><span>Total recaudado</span><span id="ud-total" class="ud-val accent">—</span></div>
+          <div class="ud-row"><span>Cobrado MP</span><span id="ud-mp-ok" class="ud-val green">—</span></div>
+          <div class="ud-row"><span>MP pendiente</span><span id="ud-mp" class="ud-val blue">—</span></div>
+          <div class="ud-row"><span>Efectivo</span><span id="ud-efectivo" class="ud-val" style="color:#fcd34d">—</span></div>
+          <div class="ud-divider"></div>
+          <div class="ud-row"><span>Alias MP</span><span class="ud-val">facundomb.mp</span></div>
+          <div class="ud-row"><span>WhatsApp</span><span class="ud-val">3816174410</span></div>
+          <div class="ud-divider"></div>
+          <button class="ud-logout" onclick="cerrarSesion()">Cerrar sesión →</button>
+        </div>
       </div>
     </div>
-  </div>
-  <nav class="tabs">
-    <button class="tab on"  onclick="goTab('nueva',this)">Nueva orden</button>
-    <button class="tab"     onclick="goTab('ordenes',this)">Órdenes <span id="tab-cnt" style="opacity:.6"></span></button>
-    <button class="tab"     onclick="goTab('acumulado',this)">Acumulado</button>
-    <button class="tab"     onclick="goTab('ruta',this)">Ruta del día</button>
-    <button class="tab"     onclick="goTab('stock',this)">Stock</button>
-    <button class="tab"     onclick="goTab('stats',this)">Estadísticas</button>
-  </nav>
-
-  <!-- NUEVA ORDEN -->
+    <nav class="tabs">
+      <button class="tab on" onclick="goTab('nueva',this)">Nueva orden</button>
+      <button class="tab" onclick="goTab('ordenes',this)">Órdenes <span id="tab-cnt" style="opacity:.6"></span></button>
+      <button class="tab" onclick="goTab('acumulado',this)">Acumulado</button>
+      <button class="tab" onclick="goTab('ruta',this)">Ruta del día</button>
+      <button class="tab" onclick="goTab('stock',this)">Stock</button>
+      <button class="tab" onclick="goTab('stats',this)">Estadísticas</button>
+    </nav><!-- NUEVA ORDEN -->
   <div id="tab-nueva" class="panel on">
     <!-- PEGAR PEDIDO WA -->
     <button class="btn-paste-wa" onclick="abrirPaste()">
@@ -374,11 +366,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     <div id="acu-wrap"><div class="empty-hist">Guardá órdenes para ver el acumulado</div></div>
   </div>
 
-  <!-- STOCK -->
-  <div id="tab-stock" class="panel">
-    <div id="stock-wrap"><div class="empty-hist">Cargando stock...</div></div>
-  </div>
-
   <!-- ESTADÍSTICAS -->
   <div id="tab-stats" class="panel">
     <div id="stats-wrap"><div class="empty-hist">Guardá órdenes para ver estadísticas</div></div>
@@ -387,10 +374,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   <!-- RUTA DEL DÍA -->
   <div id="tab-ruta" class="panel">
     <div id="ruta-wrap"><div class="empty-hist">Agregá direcciones a las órdenes para ver la ruta</div></div>
+  
+    <div id="tab-acumulado" class="panel">
+      <div id="acu-wrap"><div class="empty-hist">Guardá órdenes para ver el acumulado</div></div>
+    </div>
+    <div id="tab-stats" class="panel">
+      <div id="stats-wrap"><div class="empty-hist">Guardá órdenes para ver estadísticas</div></div>
+    </div>
+    <div id="tab-ruta" class="panel">
+      <div id="ruta-wrap"><div class="empty-hist">Agregá direcciones a las órdenes para ver la ruta</div></div>
+    </div>
+    <div id="tab-stock" class="panel">
+      <div id="stock-wrap"><div class="empty-hist">Cargando stock...</div></div>
+    </div>
   </div>
-</div>
-<div class="toast" id="toast"></div>
-
+  <div class="toast" id="toast"></div>
 <!-- MODAL PASTE WA -->
 <div class="overlay" id="paste-overlay" onclick="cerrarPasteClick(event)">
   <div class="modal" id="paste-modal" style="padding-bottom:1.5rem;max-height:75vh;overflow-y:auto;display:flex;flex-direction:column">
@@ -415,7 +413,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   </div>
 </div>
 
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+
 const MI_DIR='Francia 353, San Isidro, Buenos Aires, Argentina'
 const ROLLS=[
   // Salmon
@@ -474,7 +477,6 @@ function goTab(name,btn){
   if(name==='acumulado')renderAcumulado()
   if(name==='stats')renderStats()
   if(name==='ruta')renderRuta()
-  if(name==='stock')renderStock()
 }
 
 // Maps
@@ -1087,136 +1089,6 @@ function copiarAcumulado(){
   navigator.clipboard.writeText(txt).then(()=>showToast('Lista copiada ✓')).catch(()=>showToast('No se pudo copiar'))
 }
 
-
-// ── STOCK ─────────────────────────────────────────────────────────
-
-const INGREDIENTES = [
-  {id:'salmon',    n:'Salmón',       prods:['NY Phila','Salmon Palta']},
-  {id:'trucha',    n:'Trucha',       prods:['Maracuya','Aji Roll','Spicy Trucha','Krein']},
-  {id:'langostino',n:'Langostino',   prods:['Ebi Furai','Rocoto Lango','Kimchi Lango']},
-  {id:'pesca',     n:'Pesca blanca', prods:['Acevichado','Shiro','Krein']},
-  {id:'palta',     n:'Palta',        prods:['NY Phila','Salmon Palta','Maracuya','Aji Roll','Spicy Trucha','Acevichado']},
-  {id:'qcrema',    n:'Queso crema',  prods:['NY Phila','Salmon Palta','Ebi Furai','Kimchi Lango']},
-  {id:'arroz',     n:'Arroz',        prods:['todos']},
-  {id:'nori',      n:'Nori',         prods:['todos']},
-]
-
-function getStock(){
-  const s=localStorage.getItem('raco_stock')
-  if(s) return JSON.parse(s)
-  // Default: todo disponible
-  const d={}
-  INGREDIENTES.forEach(i=>d['ing_'+i.id]=true)
-  ROLLS.forEach((r,i)=>d['roll_'+i]=true)
-  NIGIRIS.forEach((n,i)=>d['nig_'+i]=true)
-  EXTRAS.forEach((e,i)=>d['ext_'+i]=true)
-  return d
-}
-function saveStock(s){localStorage.setItem('raco_stock',JSON.stringify(s))}
-
-function renderStock(){
-  const s=getStock()
-  let html=''
-
-  // Ingredientes
-  html+=`<div class="stock-section">
-    <div class="stock-section-title">Ingredientes</div>`
-  INGREDIENTES.forEach(ing=>{
-    const on=s['ing_'+ing.id]!==false
-    html+=`<div class="stock-item${on?'':' off'}">
-      <div class="stock-item-left">
-        <div class="stock-item-name">${ing.n}${!on?'<span class="stock-badge-off">Sin stock</span>':''}</div>
-        <div class="stock-item-sub">Afecta: ${ing.prods[0]==='todos'?'todos los productos':ing.prods.join(', ')}</div>
-      </div>
-      <label class="stock-toggle">
-        <input type="checkbox" ${on?'checked':''} onchange="toggleIngrediente('${ing.id}',this.checked)">
-        <span class="stock-slider"></span>
-      </label>
-    </div>`
-  })
-  html+='</div>'
-
-  // Rolls
-  html+=`<div class="stock-section">
-    <div class="stock-section-title">Rolls</div>`
-  ROLLS.forEach((r,i)=>{
-    const on=s['roll_'+i]!==false
-    html+=`<div class="stock-item${on?'':' off'}">
-      <div class="stock-item-left">
-        <div class="stock-item-name">${r.n}${!on?'<span class="stock-badge-off">No disponible</span>':''}</div>
-        <div class="stock-item-sub">${r.p} · $${(r.v/1000).toFixed(0)}k</div>
-      </div>
-      <label class="stock-toggle">
-        <input type="checkbox" ${on?'checked':''} onchange="toggleProducto('roll_${i}',this.checked)">
-        <span class="stock-slider"></span>
-      </label>
-    </div>`
-  })
-  html+='</div>'
-
-  // Nigiris
-  html+=`<div class="stock-section">
-    <div class="stock-section-title">Nigiris</div>`
-  NIGIRIS.forEach((n,i)=>{
-    const on=s['nig_'+i]!==false
-    html+=`<div class="stock-item${on?'':' off'}">
-      <div class="stock-item-left">
-        <div class="stock-item-name">${n.n}${!on?'<span class="stock-badge-off">No disponible</span>':''}</div>
-        <div class="stock-item-sub">${n.p} · $2.500</div>
-      </div>
-      <label class="stock-toggle">
-        <input type="checkbox" ${on?'checked':''} onchange="toggleProducto('nig_${i}',this.checked)">
-        <span class="stock-slider"></span>
-      </label>
-    </div>`
-  })
-  html+='</div>'
-
-  // Extras
-  html+=`<div class="stock-section">
-    <div class="stock-section-title">Salsas y Extras</div>`
-  EXTRAS.forEach((e,i)=>{
-    const on=s['ext_'+i]!==false
-    html+=`<div class="stock-item${on?'':' off'}">
-      <div class="stock-item-left">
-        <div class="stock-item-name">${e.n}${!on?'<span class="stock-badge-off">No disponible</span>':''}</div>
-        <div class="stock-item-sub">$700</div>
-      </div>
-      <label class="stock-toggle">
-        <input type="checkbox" ${on?'checked':''} onchange="toggleProducto('ext_${i}',this.checked)">
-        <span class="stock-slider"></span>
-      </label>
-    </div>`
-  })
-  html+='</div>'
-
-  document.getElementById('stock-wrap').innerHTML=html
-}
-
-function toggleIngrediente(id, on){
-  const s=getStock()
-  s['ing_'+id]=on
-  // Si se apaga un ingrediente, desactivar productos relacionados
-  const ing=INGREDIENTES.find(i=>i.id===id)
-  if(ing && !on && ing.prods[0]!=='todos'){
-    ing.prods.forEach(nombre=>{
-      ROLLS.forEach((r,i)=>{if(r.wa===nombre||r.n===nombre) s['roll_'+i]=false})
-      NIGIRIS.forEach((n,i)=>{if(n.wa===nombre||n.n===nombre) s['nig_'+i]=false})
-    })
-  }
-  saveStock(s)
-  renderStock()
-  showToast(on?'Ingrediente disponible ✓':'Ingrediente sin stock')
-}
-
-function toggleProducto(key, on){
-  const s=getStock()
-  s[key]=on
-  saveStock(s)
-  renderStock()
-  showToast(on?'Producto activo ✓':'Producto desactivado')
-}
-
 // ── ESTADÍSTICAS ──────────────────────────────────────────────────
 function getHistStats(){return JSON.parse(localStorage.getItem('sushi_hist_stats')||'[]')}
 function renderStats(){
@@ -1470,99 +1342,21 @@ buildList(ROLLS,rq,'r','list-rolls')
 buildList(NIGIRIS,nq,'n','list-nigiris')
 buildList(EXTRAS,eq,'e','list-extras')
 calcS();updateTabCount()
-</script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-let mapOrd=null, markerOrd=null, geoTimerOrd=null
 
-function buscarDirOrden(){
-  dirConfirmadaOrden=null
-  clearTimeout(geoTimerOrd)
-  const calle=$('f-addr').value.trim()
-  const num=$('f-numero')?$('f-numero').value.trim():''
-  const loc=$('f-localidad').value.trim()||'San Isidro'
-  if(!calle) return
-  const q=[calle,num,loc,'Buenos Aires','Argentina'].filter(Boolean).join(' ')
-  geoTimerOrd=setTimeout(()=>geocodificarOrden(q), 700)
-}
 
-function geocodificarOrden(q){
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1&countrycodes=ar`)
-    .then(r=>r.json())
-    .then(data=>{
-      if(!data.length){$('map-wrap-ord').style.display='none';return}
-      const lat=parseFloat(data[0].lat),lng=parseFloat(data[0].lon)
-      mostrarMapaOrden(lat,lng,data[0].display_name)
-    }).catch(()=>{})
-}
-
-function mostrarMapaOrden(lat,lng,displayName){
-  $('map-wrap-ord').style.display='block'
-  $('map-ord-confirm').style.display='block'
-  $('map-ord-label').textContent='📍 '+(displayName||'').split(',').slice(0,3).join(',')
-  if(!mapOrd){
-    mapOrd=L.map('map-ord',{zoomControl:true,attributionControl:false}).setView([lat,lng],16)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapOrd)
-    const icon=L.divIcon({className:'',html:'<div style="width:14px;height:14px;background:#c9a96e;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.5)"></div>',iconSize:[14,14],iconAnchor:[7,7]})
-    markerOrd=L.marker([lat,lng],{icon,draggable:true}).addTo(mapOrd)
-    markerOrd.on('dragend',()=>{
-      $('map-ord-label').textContent='📍 Posición ajustada manualmente'
-    })
-  } else {
-    mapOrd.setView([lat,lng],16)
-    markerOrd.setLatLng([lat,lng])
-  }
-  setTimeout(()=>mapOrd.invalidateSize(),100)
-}
-
-let dirConfirmadaOrden = null
-
-function confirmarUbicacionOrden(){
-  const calleBase=$('f-addr').value.trim()
-  const numero=$('f-numero')?$('f-numero').value.trim():''
-  const dpto=$('f-dpto').value.trim()
-  const localidad=$('f-localidad')?$('f-localidad').value.trim():''
-  dirConfirmadaOrden = {
-    addr: [calleBase, numero, localidad].filter(Boolean).join(' '),
-    addrDisplay: [calleBase, numero, dpto, localidad].filter(Boolean).join(', ')
-  }
-  $('map-ord-confirm').textContent='✓ Ubicación confirmada'
-  $('map-ord-confirm').style.background='var(--green)'
-  $('map-ord-confirm').style.color='#0d0d0d'
-  $('map-ord-confirm').disabled=true
-  $('map-ord-label').style.color='var(--green)'
-}
-
-// Limpiar mapa al resetear orden
-const _origReset=resetOrden
-window.resetOrdenConMapa=function(){
-  _origReset()
-  $('map-wrap-ord').style.display='none'
-  $('map-ord-confirm').textContent='✓ Confirmar ubicación'
-  $('map-ord-confirm').style.background='var(--accent)'
-  $('map-ord-confirm').style.color='#0d0d0d'
-  $('map-ord-confirm').disabled=false
-  if(mapOrd&&markerOrd)markerOrd.setLatLng([0,0])
-  dirConfirmadaOrden=null
-}
-</script>
-
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-const PASS = btoa('Racosushi1101') // ofuscado en base64
+// ── ADMIN: LOGIN ───────────────────────────────────────────────────
+const PASS = btoa('Racosushi1101')
 
 function checkPwd(){
-  const val = document.getElementById('pwd-input').value
-  if(btoa(val) === PASS){
+  const val=document.getElementById('pwd-input').value
+  if(btoa(val)===PASS){
     document.getElementById('login-wrap').classList.add('hidden')
     document.getElementById('app-wrap').classList.add('visible')
-    sessionStorage.setItem('raco_auth', PASS)
-    setTimeout(updateUserMenu, 500)
+    sessionStorage.setItem('raco_auth',PASS)
+    setTimeout(updateUserMenu,500)
   } else {
-    document.getElementById('login-error').style.display = 'block'
-    document.getElementById('pwd-input').value = ''
+    document.getElementById('login-error').style.display='block'
+    document.getElementById('pwd-input').value=''
     document.getElementById('pwd-input').focus()
   }
 }
@@ -1571,57 +1365,130 @@ function cerrarSesion(){
   sessionStorage.removeItem('raco_auth')
   document.getElementById('login-wrap').classList.remove('hidden')
   document.getElementById('app-wrap').classList.remove('visible')
-  document.getElementById('pwd-input').value = ''
-  document.getElementById('login-error').style.display = 'none'
+  document.getElementById('pwd-input').value=''
+  document.getElementById('login-error').style.display='none'
   document.getElementById('user-dropdown').classList.remove('open')
   document.getElementById('user-arrow').classList.remove('open')
 }
 
 function toggleUserMenu(){
-  const dd = document.getElementById('user-dropdown')
-  const ar = document.getElementById('user-arrow')
-  const isOpen = dd.classList.toggle('open')
-  ar.classList.toggle('open', isOpen)
-  if(isOpen) updateUserMenu()
+  const dd=document.getElementById('user-dropdown')
+  const ar=document.getElementById('user-arrow')
+  const isOpen=dd.classList.toggle('open')
+  ar.classList.toggle('open',isOpen)
+  if(isOpen)updateUserMenu()
 }
 
 function updateUserMenu(){
-  try {
-    const ords = JSON.parse(localStorage.getItem('sushi_ordenes') || '[]')
-    const pendientes = ords.filter(o => !o.listo).length
-    const listos = ords.filter(o => o.listo).length
-    const total = ords.reduce((a, o) => a + (o.total || 0), 0)
-    const esMP = o => o.pago && (o.pago.toLowerCase().includes('mercado') || o.pago.toLowerCase().includes('mp'))
-    const mpPend = ords.filter(o => esMP(o) && !o.pagado).reduce((a,o)=>a+(o.total||0),0)
-    const mpOk   = ords.filter(o => esMP(o) && o.pagado).reduce((a,o)=>a+(o.total||0),0)
-    const efectivo = ords.filter(o => !esMP(o)).reduce((a,o)=>a+(o.total||0),0)
-    const money = n => '$' + Math.round(n).toLocaleString('es-AR')
-    document.getElementById('ud-total-ord').textContent = ords.length
-    document.getElementById('ud-pendientes').textContent = pendientes
-    document.getElementById('ud-listos').textContent = listos
-    document.getElementById('ud-total').textContent = money(total)
-    document.getElementById('ud-mp').textContent = money(mpPend)
-    document.getElementById('ud-mp-ok').textContent = money(mpOk)
-    document.getElementById('ud-efectivo').textContent = money(efectivo)
-    // Badge en el botón
-    document.getElementById('user-summary').textContent = pendientes + ' pendiente' + (pendientes !== 1 ? 's' : '')
-  } catch(e) {}
+  try{
+    const ords=JSON.parse(localStorage.getItem('sushi_ordenes')||'[]')
+    const pendientes=ords.filter(o=>!o.listo).length
+    const listos=ords.filter(o=>o.listo).length
+    const total=ords.reduce((a,o)=>a+(o.total||0),0)
+    const esMP=o=>o.pago&&(o.pago.toLowerCase().includes('mercado')||o.pago.toLowerCase().includes('mp'))
+    const mpPend=ords.filter(o=>esMP(o)&&!o.pagado).reduce((a,o)=>a+(o.total||0),0)
+    const mpOk=ords.filter(o=>esMP(o)&&o.pagado).reduce((a,o)=>a+(o.total||0),0)
+    const efectivo=ords.filter(o=>!esMP(o)).reduce((a,o)=>a+(o.total||0),0)
+    const money=n=>'$'+Math.round(n).toLocaleString('es-AR')
+    document.getElementById('ud-total-ord').textContent=ords.length
+    document.getElementById('ud-pendientes').textContent=pendientes
+    document.getElementById('ud-listos').textContent=listos
+    document.getElementById('ud-total').textContent=money(total)
+    document.getElementById('ud-mp').textContent=money(mpPend)
+    document.getElementById('ud-mp-ok').textContent=money(mpOk)
+    document.getElementById('ud-efectivo').textContent=money(efectivo)
+    document.getElementById('user-summary').textContent=pendientes+' pendiente'+(pendientes!==1?'s':'')
+  }catch(e){}
 }
 
-// Cerrar dropdown al hacer click afuera
-document.addEventListener('click', e => {
-  const wrap = document.querySelector('.user-menu-wrap')
-  if(wrap && !wrap.contains(e.target)){
+document.addEventListener('click',e=>{
+  const wrap=document.querySelector('.user-menu-wrap')
+  if(wrap&&!wrap.contains(e.target)){
     document.getElementById('user-dropdown').classList.remove('open')
     document.getElementById('user-arrow').classList.remove('open')
   }
 })
 
-// Si ya estaba autenticado en esta sesión
-if(sessionStorage.getItem('raco_auth') === PASS){
+// ── STOCK ─────────────────────────────────────────────────────────
+const INGREDIENTES=[
+  {id:'salmon',    n:'Salmón',       prods:['NY Phila','Salmon Palta']},
+  {id:'trucha',    n:'Trucha',       prods:['Maracuya','Aji Roll','Spicy Trucha']},
+  {id:'langostino',n:'Langostino',   prods:['Ebi Furai','Rocoto Lango','Kimchi Lango']},
+  {id:'pesca',     n:'Pesca blanca', prods:['Acevichado','Shiro','Krein']},
+  {id:'palta',     n:'Palta',        prods:['NY Phila','Salmon Palta','Maracuya','Aji Roll']},
+  {id:'qcrema',    n:'Queso crema',  prods:['NY Phila','Salmon Palta','Ebi Furai','Kimchi Lango']},
+  {id:'arroz',     n:'Arroz',        prods:['todos']},
+  {id:'nori',      n:'Nori',         prods:['todos']},
+]
+
+function getStock(){
+  const s=localStorage.getItem('raco_stock')
+  if(s)return JSON.parse(s)
+  const d={}
+  INGREDIENTES.forEach(i=>d['ing_'+i.id]=true)
+  ROLLS.forEach((r,i)=>d['roll_'+i]=true)
+  NIGIRIS.forEach((n,i)=>d['nig_'+i]=true)
+  EXTRAS.forEach((e,i)=>d['ext_'+i]=true)
+  return d
+}
+function saveStock(s){localStorage.setItem('raco_stock',JSON.stringify(s))}
+
+function renderStock(){
+  const s=getStock()
+  let html=''
+  html+=`<div class="stock-section"><div class="stock-section-title">Ingredientes</div>`
+  INGREDIENTES.forEach(ing=>{
+    const on=s['ing_'+ing.id]!==false
+    html+=`<div class="stock-item${on?'':' off'}"><div class="stock-item-left"><div class="stock-item-name">${ing.n}${!on?'<span class="stock-badge-off">Sin stock</span>':''}</div><div class="stock-item-sub">Afecta: ${ing.prods[0]==='todos'?'todos los productos':ing.prods.join(', ')}</div></div><label class="stock-toggle"><input type="checkbox" ${on?'checked':''} onchange="toggleIng('${ing.id}',this.checked)"><span class="stock-slider"></span></label></div>`
+  })
+  html+=`</div><div class="stock-section"><div class="stock-section-title">Rolls</div>`
+  ROLLS.forEach((r,i)=>{
+    const on=s['roll_'+i]!==false
+    html+=`<div class="stock-item${on?'':' off'}"><div class="stock-item-left"><div class="stock-item-name">${r.n}${!on?'<span class="stock-badge-off">No disponible</span>':''}</div><div class="stock-item-sub">${r.p} · $${(r.v/1000).toFixed(0)}k</div></div><label class="stock-toggle"><input type="checkbox" ${on?'checked':''} onchange="toggleProd('roll_${i}',this.checked)"><span class="stock-slider"></span></label></div>`
+  })
+  html+=`</div><div class="stock-section"><div class="stock-section-title">Nigiris</div>`
+  NIGIRIS.forEach((n,i)=>{
+    const on=s['nig_'+i]!==false
+    html+=`<div class="stock-item${on?'':' off'}"><div class="stock-item-left"><div class="stock-item-name">${n.n}${!on?'<span class="stock-badge-off">No disponible</span>':''}</div><div class="stock-item-sub">${n.p} · $2.500</div></div><label class="stock-toggle"><input type="checkbox" ${on?'checked':''} onchange="toggleProd('nig_${i}',this.checked)"><span class="stock-slider"></span></label></div>`
+  })
+  html+=`</div><div class="stock-section"><div class="stock-section-title">Salsas y Extras</div>`
+  EXTRAS.forEach((e,i)=>{
+    const on=s['ext_'+i]!==false
+    html+=`<div class="stock-item${on?'':' off'}"><div class="stock-item-left"><div class="stock-item-name">${e.n}${!on?'<span class="stock-badge-off">No disponible</span>':''}</div><div class="stock-item-sub">$700</div></div><label class="stock-toggle"><input type="checkbox" ${on?'checked':''} onchange="toggleProd('ext_${i}',this.checked)"><span class="stock-slider"></span></label></div>`
+  })
+  html+=`</div>`
+  document.getElementById('stock-wrap').innerHTML=html
+}
+
+function toggleIng(id,on){
+  const s=getStock()
+  s['ing_'+id]=on
+  if(!on){
+    const ing=INGREDIENTES.find(i=>i.id===id)
+    if(ing&&ing.prods[0]!=='todos'){
+      ing.prods.forEach(nombre=>{
+        ROLLS.forEach((r,i)=>{if(r.wa===nombre||r.n===nombre)s['roll_'+i]=false})
+        NIGIRIS.forEach((n,i)=>{if(n.wa===nombre||n.n===nombre)s['nig_'+i]=false})
+      })
+    }
+  }
+  saveStock(s);renderStock()
+  showToast(on?'Ingrediente disponible ✓':'Sin stock marcado')
+}
+
+function toggleProd(key,on){
+  const s=getStock();s[key]=on;saveStock(s);renderStock()
+  showToast(on?'Producto activo ✓':'Producto desactivado')
+}
+
+// Extender goTab para stock
+const _gt=goTab
+window.goTab=function(name,btn){_gt(name,btn);if(name==='stock')renderStock();if(name==='ordenes'||name==='acumulado')updateUserMenu()}
+
+if(sessionStorage.getItem('raco_auth')===PASS){
   document.getElementById('login-wrap').classList.add('hidden')
   document.getElementById('app-wrap').classList.add('visible')
-  setTimeout(updateUserMenu, 500)
+  setTimeout(updateUserMenu,500)
 }
 </script>
 </body>
