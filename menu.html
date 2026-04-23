@@ -525,7 +525,7 @@ function buildMsg(){
   const dpto=$('f-dpto').value.trim()
   const localidad=$('f-localidad').value.trim()
   const nota=$('f-nota').value.trim()
-  const addrFull=dirConfirmada||[addr,dpto,localidad].filter(Boolean).join(', ')
+  const addrFull=[addr,dpto,localidad].filter(Boolean).join(', ')
   const hora=new Date();const h=hora.getHours().toString().padStart(2,'0')+':'+hora.getMinutes().toString().padStart(2,'0')
   let sub=0;const lines=[]
   ROLLS.forEach((it,i)=>{if(rq[i]>0){lines.push(`- ${rq[i]}x ${it.wa} - ${money(it.v*rq[i])}`);sub+=it.v*rq[i]}})
