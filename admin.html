@@ -383,6 +383,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   </div>
 
   <div class="toast" id="toast"></div>
+<!-- MODAL CONFIRMAR WA -->
+<div class="overlay" id="confirm-overlay">
+  <div class="modal">
+    <div class="modal-title" style="margin-bottom:.5rem">Orden guardada ✓</div>
+    <div style="font-size:.78rem;color:var(--dim);margin-bottom:.85rem">¿Querés enviar confirmación por WhatsApp al cliente?</div>
+    <div class="modal-btns">
+      <button class="mbtn back" onclick="cerrarConfirm(false)">No, ver órdenes</button>
+      <button class="mbtn wa" onclick="cerrarConfirm(true)">💬 Enviar WA</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL PASTE WA -->
 <div class="overlay" id="paste-overlay" onclick="cerrarPasteClick(event)">
   <div class="modal" id="paste-modal" style="padding-bottom:1.5rem;max-height:75vh;overflow-y:auto;display:flex;flex-direction:column">
@@ -892,8 +904,20 @@ function guardar(){
   updateTabCount();resetOrden()
   parsedOrden=null  // limpiar parser
   showToast('Orden guardada ✓')
-  // Enviar WA de confirmación al cliente
-  enviarConfirmacion(orden)
+  // Mostrar modal para confirmar si enviar WA (window.open automático es bloqueado por el navegador)
+  if(orden.tel){
+    _ordenParaConfirmar = orden
+    $('confirm-overlay').classList.add('show')
+  } else {
+    document.querySelectorAll('.tab')[1].click()
+  }
+}
+
+let _ordenParaConfirmar = null
+function cerrarConfirm(enviarWA){
+  $('confirm-overlay').classList.remove('show')
+  if(enviarWA && _ordenParaConfirmar) enviarConfirmacion(_ordenParaConfirmar)
+  _ordenParaConfirmar = null
   document.querySelectorAll('.tab')[1].click()
 }
 
