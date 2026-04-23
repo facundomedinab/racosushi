@@ -175,6 +175,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 /* toast */
 .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(4px);background:var(--surface2);border:.5px solid var(--border2);border-radius:6px;padding:.55rem 1rem;font-family:var(--mono);font-size:.7rem;color:var(--text2);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:99;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── STOCK ── */
+.stock-section{margin-bottom:1.75rem}
+.stock-section-title{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:.5px solid var(--border)}
+.stock-item{display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;background:var(--surface);border:.5px solid var(--border);border-radius:6px;margin-bottom:.35rem;transition:all .15s}
+.stock-item.off{opacity:.45;border-color:var(--border)}
+.stock-item-left{display:flex;flex-direction:column;gap:.15rem}
+.stock-item-name{font-size:.85rem;font-weight:500}
+.stock-item-sub{font-size:.68rem;color:var(--muted)}
+.stock-toggle{position:relative;width:38px;height:20px;flex-shrink:0}
+.stock-toggle input{opacity:0;width:0;height:0;position:absolute}
+.stock-slider{position:absolute;inset:0;background:var(--border2);border-radius:10px;cursor:pointer;transition:background .2s}
+.stock-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#555;border-radius:50%;transition:all .2s}
+.stock-toggle input:checked + .stock-slider{background:var(--green)}
+.stock-toggle input:checked + .stock-slider::before{transform:translateX(18px);background:#fff}
+.stock-badge-off{font-family:var(--mono);font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--red);background:#1a0808;border:.5px solid #3a1010;border-radius:3px;padding:.1rem .4rem;margin-left:.5rem}
+
 /* ruta */
 .ruta-card{background:var(--surface);border:.5px solid var(--border2);border-radius:8px;overflow:hidden;margin-bottom:1.25rem}
 .ruta-origen{display:flex;align-items:center;gap:.65rem;padding:.75rem 1rem;border-bottom:.5px solid var(--border)}
@@ -239,11 +256,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
       </button>
       <div class="user-dropdown" id="user-dropdown">
         <div class="ud-title">Resumen de jornada</div>
+        <div class="ud-row"><span>Total órdenes</span><span id="ud-total-ord" class="ud-val">—</span></div>
         <div class="ud-row"><span>Pendientes</span><span id="ud-pendientes" class="ud-val">—</span></div>
         <div class="ud-row"><span>Listos</span><span id="ud-listos" class="ud-val">—</span></div>
+        <div class="ud-divider"></div>
         <div class="ud-row"><span>Total recaudado</span><span id="ud-total" class="ud-val accent">—</span></div>
+        <div class="ud-row"><span>Cobrado por MP</span><span id="ud-mp-ok" class="ud-val green">—</span></div>
         <div class="ud-row"><span>MP pendiente</span><span id="ud-mp" class="ud-val blue">—</span></div>
-        <div class="ud-row"><span>MP confirmado</span><span id="ud-mp-ok" class="ud-val green">—</span></div>
+        <div class="ud-row"><span>Cobrado efectivo</span><span id="ud-efectivo" class="ud-val" style="color:#fcd34d">—</span></div>
         <div class="ud-divider"></div>
         <div class="ud-row"><span>Alias MP</span><span class="ud-val">facundomb.mp</span></div>
         <div class="ud-row"><span>WhatsApp</span><span class="ud-val">3816174410</span></div>
@@ -256,8 +276,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     <button class="tab on"  onclick="goTab('nueva',this)">Nueva orden</button>
     <button class="tab"     onclick="goTab('ordenes',this)">Órdenes <span id="tab-cnt" style="opacity:.6"></span></button>
     <button class="tab"     onclick="goTab('acumulado',this)">Acumulado</button>
-    <button class="tab"     onclick="goTab('stats',this)">Estadísticas</button>
     <button class="tab"     onclick="goTab('ruta',this)">Ruta del día</button>
+    <button class="tab"     onclick="goTab('stock',this)">Stock</button>
+    <button class="tab"     onclick="goTab('stats',this)">Estadísticas</button>
   </nav>
 
   <!-- NUEVA ORDEN -->
@@ -351,6 +372,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   <!-- ACUMULADO -->
   <div id="tab-acumulado" class="panel">
     <div id="acu-wrap"><div class="empty-hist">Guardá órdenes para ver el acumulado</div></div>
+  </div>
+
+  <!-- STOCK -->
+  <div id="tab-stock" class="panel">
+    <div id="stock-wrap"><div class="empty-hist">Cargando stock...</div></div>
   </div>
 
   <!-- ESTADÍSTICAS -->
@@ -1060,6 +1086,143 @@ function copiarAcumulado(){
   navigator.clipboard.writeText(txt).then(()=>showToast('Lista copiada ✓')).catch(()=>showToast('No se pudo copiar'))
 }
 
+
+// ── STOCK ─────────────────────────────────────────────────────────
+
+const INGREDIENTES = [
+  {id:'salmon',    n:'Salmón',       prods:['NY Phila','Salmon Palta']},
+  {id:'trucha',    n:'Trucha',       prods:['Maracuya','Aji Roll','Spicy Trucha','Krein']},
+  {id:'langostino',n:'Langostino',   prods:['Ebi Furai','Rocoto Lango','Kimchi Lango']},
+  {id:'pesca',     n:'Pesca blanca', prods:['Acevichado','Shiro','Krein']},
+  {id:'palta',     n:'Palta',        prods:['NY Phila','Salmon Palta','Maracuya','Aji Roll','Spicy Trucha','Acevichado']},
+  {id:'qcrema',    n:'Queso crema',  prods:['NY Phila','Salmon Palta','Ebi Furai','Kimchi Lango']},
+  {id:'arroz',     n:'Arroz',        prods:['todos']},
+  {id:'nori',      n:'Nori',         prods:['todos']},
+]
+
+function getStock(){
+  const s=localStorage.getItem('raco_stock')
+  if(s) return JSON.parse(s)
+  // Default: todo disponible
+  const d={}
+  INGREDIENTES.forEach(i=>d['ing_'+i.id]=true)
+  ROLLS.forEach((r,i)=>d['roll_'+i]=true)
+  NIGIRIS.forEach((n,i)=>d['nig_'+i]=true)
+  EXTRAS.forEach((e,i)=>d['ext_'+i]=true)
+  return d
+}
+function saveStock(s){localStorage.setItem('raco_stock',JSON.stringify(s))}
+
+function renderStock(){
+  const s=getStock()
+  let html=''
+
+  // Ingredientes
+  html+=`<div class="stock-section">
+    <div class="stock-section-title">Ingredientes</div>`
+  INGREDIENTES.forEach(ing=>{
+    const on=s['ing_'+ing.id]!==false
+    html+=`<div class="stock-item${on?'':' off'}">
+      <div class="stock-item-left">
+        <div class="stock-item-name">${ing.n}${!on?'<span class="stock-badge-off">Sin stock</span>':''}</div>
+        <div class="stock-item-sub">Afecta: ${ing.prods[0]==='todos'?'todos los productos':ing.prods.join(', ')}</div>
+      </div>
+      <label class="stock-toggle">
+        <input type="checkbox" ${on?'checked':''} onchange="toggleIngrediente('${ing.id}',this.checked)">
+        <span class="stock-slider"></span>
+      </label>
+    </div>`
+  })
+  html+='</div>'
+
+  // Rolls
+  html+=`<div class="stock-section">
+    <div class="stock-section-title">Rolls</div>`
+  ROLLS.forEach((r,i)=>{
+    const on=s['roll_'+i]!==false
+    html+=`<div class="stock-item${on?'':' off'}">
+      <div class="stock-item-left">
+        <div class="stock-item-name">${r.n}${!on?'<span class="stock-badge-off">No disponible</span>':''}</div>
+        <div class="stock-item-sub">${r.p} · $${(r.v/1000).toFixed(0)}k</div>
+      </div>
+      <label class="stock-toggle">
+        <input type="checkbox" ${on?'checked':''} onchange="toggleProducto('roll_${i}',this.checked)">
+        <span class="stock-slider"></span>
+      </label>
+    </div>`
+  })
+  html+='</div>'
+
+  // Nigiris
+  html+=`<div class="stock-section">
+    <div class="stock-section-title">Nigiris</div>`
+  NIGIRIS.forEach((n,i)=>{
+    const on=s['nig_'+i]!==false
+    html+=`<div class="stock-item${on?'':' off'}">
+      <div class="stock-item-left">
+        <div class="stock-item-name">${n.n}${!on?'<span class="stock-badge-off">No disponible</span>':''}</div>
+        <div class="stock-item-sub">${n.p} · $2.500</div>
+      </div>
+      <label class="stock-toggle">
+        <input type="checkbox" ${on?'checked':''} onchange="toggleProducto('nig_${i}',this.checked)">
+        <span class="stock-slider"></span>
+      </label>
+    </div>`
+  })
+  html+='</div>'
+
+  // Extras
+  html+=`<div class="stock-section">
+    <div class="stock-section-title">Salsas y Extras</div>`
+  EXTRAS.forEach((e,i)=>{
+    const on=s['ext_'+i]!==false
+    html+=`<div class="stock-item${on?'':' off'}">
+      <div class="stock-item-left">
+        <div class="stock-item-name">${e.n}${!on?'<span class="stock-badge-off">No disponible</span>':''}</div>
+        <div class="stock-item-sub">$700</div>
+      </div>
+      <label class="stock-toggle">
+        <input type="checkbox" ${on?'checked':''} onchange="toggleProducto('ext_${i}',this.checked)">
+        <span class="stock-slider"></span>
+      </label>
+    </div>`
+  })
+  html+='</div>'
+
+  document.getElementById('stock-wrap').innerHTML=html
+}
+
+function toggleIngrediente(id, on){
+  const s=getStock()
+  s['ing_'+id]=on
+  // Si se apaga un ingrediente, desactivar productos relacionados
+  const ing=INGREDIENTES.find(i=>i.id===id)
+  if(ing && !on && ing.prods[0]!=='todos'){
+    ing.prods.forEach(nombre=>{
+      ROLLS.forEach((r,i)=>{if(r.wa===nombre||r.n===nombre) s['roll_'+i]=false})
+      NIGIRIS.forEach((n,i)=>{if(n.wa===nombre||n.n===nombre) s['nig_'+i]=false})
+    })
+  }
+  saveStock(s)
+  renderStock()
+  showToast(on?'Ingrediente disponible ✓':'Ingrediente sin stock')
+}
+
+function toggleProducto(key, on){
+  const s=getStock()
+  s[key]=on
+  saveStock(s)
+  renderStock()
+  showToast(on?'Producto activo ✓':'Producto desactivado')
+}
+
+// Interceptar goTab para renderizar stock
+const _origGoTab=goTab
+function goTab(name,btn){
+  _origGoTab(name,btn)
+  if(name==='stock') renderStock()
+}
+
 // ── ESTADÍSTICAS ──────────────────────────────────────────────────
 function getHistStats(){return JSON.parse(localStorage.getItem('sushi_hist_stats')||'[]')}
 function renderStats(){
@@ -1434,20 +1597,18 @@ function updateUserMenu(){
     const pendientes = ords.filter(o => !o.listo).length
     const listos = ords.filter(o => o.listo).length
     const total = ords.reduce((a, o) => a + (o.total || 0), 0)
-    const mpPend = ords.filter(o => {
-      const esMP = o.pago && (o.pago.toLowerCase().includes('mercado') || o.pago.toLowerCase().includes('mp'))
-      return esMP && !o.pagado
-    }).reduce((a, o) => a + (o.total || 0), 0)
-    const mpOk = ords.filter(o => {
-      const esMP = o.pago && (o.pago.toLowerCase().includes('mercado') || o.pago.toLowerCase().includes('mp'))
-      return esMP && o.pagado
-    }).reduce((a, o) => a + (o.total || 0), 0)
+    const esMP = o => o.pago && (o.pago.toLowerCase().includes('mercado') || o.pago.toLowerCase().includes('mp'))
+    const mpPend = ords.filter(o => esMP(o) && !o.pagado).reduce((a,o)=>a+(o.total||0),0)
+    const mpOk   = ords.filter(o => esMP(o) && o.pagado).reduce((a,o)=>a+(o.total||0),0)
+    const efectivo = ords.filter(o => !esMP(o)).reduce((a,o)=>a+(o.total||0),0)
     const money = n => '$' + Math.round(n).toLocaleString('es-AR')
+    document.getElementById('ud-total-ord').textContent = ords.length
     document.getElementById('ud-pendientes').textContent = pendientes
     document.getElementById('ud-listos').textContent = listos
     document.getElementById('ud-total').textContent = money(total)
     document.getElementById('ud-mp').textContent = money(mpPend)
     document.getElementById('ud-mp-ok').textContent = money(mpOk)
+    document.getElementById('ud-efectivo').textContent = money(efectivo)
     // Badge en el botón
     document.getElementById('user-summary').textContent = pendientes + ' pendiente' + (pendientes !== 1 ? 's' : '')
   } catch(e) {}
