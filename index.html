@@ -371,48 +371,63 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
       <div class="section-tag">Nuestras proteínas</div>
       <h2 class="section-title"><span class="c-tru">Ingredientes</span></h2>
     </div>
-    <div class="ing-grid fade-up">
-      <div class="ing-card">
-        <div class="ing-img-wrap">
-          <img src="https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=600&q=80" alt="Salmón">
-          <div class="ing-overlay"></div>
-        </div>
-        <div class="ing-info">
-          <div class="ing-name">Salmón</div>
-          <div class="ing-sci">Salmo salar</div>
+    <div class="ing-carousel-wrap fade-up">
+      <button class="ing-arrow ing-prev" onclick="ingMove(-1)">←</button>
+      <div class="ing-track-wrap">
+        <div class="ing-track" id="ing-track">
+          <div class="ing-card">
+            <div class="ing-img-wrap">
+              <img src="salmon.jpg" alt="Salmón">
+            </div>
+            <div class="ing-info">
+              <div class="ing-name">Salmón</div>
+            </div>
+          </div>
+          <div class="ing-card">
+            <div class="ing-img-wrap">
+              <img src="trucha.jpg" alt="Trucha Salmonada">
+            </div>
+            <div class="ing-info">
+              <div class="ing-name">Trucha Salmonada</div>
+            </div>
+          </div>
+          <div class="ing-card">
+            <div class="ing-img-wrap">
+              <img src="langostino.jpg" alt="Langostino">
+            </div>
+            <div class="ing-info">
+              <div class="ing-name">Langostino</div>
+            </div>
+          </div>
+          <div class="ing-card">
+            <div class="ing-img-wrap">
+              <img src="lenguado.jpg" alt="Lenguado">
+            </div>
+            <div class="ing-info">
+              <div class="ing-name">Lenguado</div>
+            </div>
+          </div>
+          <div class="ing-card">
+            <div class="ing-img-wrap">
+              <img src="lisa.jpg" alt="Lisa">
+            </div>
+            <div class="ing-info">
+              <div class="ing-name">Lisa</div>
+            </div>
+          </div>
+          <div class="ing-card">
+            <div class="ing-img-wrap">
+              <img src="besugo.jpg" alt="Besugo">
+            </div>
+            <div class="ing-info">
+              <div class="ing-name">Besugo</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="ing-card">
-        <div class="ing-img-wrap">
-          <img src="https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=600&q=80" alt="Trucha">
-          <div class="ing-overlay"></div>
-        </div>
-        <div class="ing-info">
-          <div class="ing-name">Trucha</div>
-          <div class="ing-sci">Oncorhynchus mykiss</div>
-        </div>
-      </div>
-      <div class="ing-card">
-        <div class="ing-img-wrap">
-          <img src="https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80" alt="Langostino">
-          <div class="ing-overlay"></div>
-        </div>
-        <div class="ing-info">
-          <div class="ing-name">Langostino</div>
-          <div class="ing-sci">Pleoticus muelleri</div>
-        </div>
-      </div>
-      <div class="ing-card">
-        <div class="ing-img-wrap">
-          <img src="https://images.unsplash.com/photo-1607189407395-4c01a5193a4a?w=600&q=80" alt="Pesca blanca">
-          <div class="ing-overlay"></div>
-        </div>
-        <div class="ing-info">
-          <div class="ing-name">Pesca blanca</div>
-          <div class="ing-sci">Variedad del día</div>
-        </div>
-      </div>
+      <button class="ing-arrow ing-next" onclick="ingMove(1)">→</button>
     </div>
+    <div class="ing-dots" id="ing-dots"></div>
   </div>
 </section>
 
@@ -446,6 +461,47 @@ function toggleMenu(){
   m.classList.toggle('open')
   document.body.style.overflow=m.classList.contains('open')?'hidden':''
 }
+
+// ── CARRUSEL INGREDIENTES ──────────────────────────────────────────
+(function(){
+  const track = document.getElementById('ing-track')
+  const dotsWrap = document.getElementById('ing-dots')
+  if(!track) return
+  const cards = track.querySelectorAll('.ing-card')
+  let current = 0
+  const visible = () => window.innerWidth <= 480 ? 1 : window.innerWidth <= 768 ? 2 : 3
+  const max = () => Math.max(0, cards.length - visible())
+
+  // Crear dots
+  cards.forEach((_,i) => {
+    const d = document.createElement('div')
+    d.className = 'ing-dot' + (i===0?' on':'')
+    d.onclick = () => ingGoTo(i)
+    dotsWrap.appendChild(d)
+  })
+
+  window.ingMove = function(dir){
+    ingGoTo(Math.max(0, Math.min(current + dir, max())))
+  }
+
+  window.ingGoTo = function(idx){
+    current = Math.max(0, Math.min(idx, max()))
+    const cardW = cards[0].offsetWidth + 1.5
+    track.style.transform = `translateX(-${current * cardW}px)`
+    dotsWrap.querySelectorAll('.ing-dot').forEach((d,i) => d.classList.toggle('on', i===current))
+  }
+
+  // Touch swipe
+  let startX = 0
+  track.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive:true})
+  track.addEventListener('touchend', e => {
+    const diff = startX - e.changedTouches[0].clientX
+    if(Math.abs(diff) > 50) ingMove(diff > 0 ? 1 : -1)
+  }, {passive:true})
+
+  window.addEventListener('resize', () => ingGoTo(current))
+})()
+
 </script>
 </body>
 </html>
