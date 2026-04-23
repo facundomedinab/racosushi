@@ -20,21 +20,21 @@ html{scroll-behavior:smooth;font-size:16px}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);overflow-x:hidden}
 
 /* ── NAV ── */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.25rem 2.5rem;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(8,8,8,.95),transparent)}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.25rem 2.5rem;display:flex;justify-content:space-between;align-items:center;background:rgba(8,8,8,.97);border-bottom:.5px solid var(--border)}
 .nav-brand{font-family:var(--mono);font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
 .nav-links{display:flex;gap:2rem;list-style:none}
-.nav-links a{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color .2s}
+.nav-links a{font-family:var(--mono);font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color .2s}
 .nav-links a:hover{color:var(--ink)}
-.nav-cta{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;background:var(--gold);color:#080808;padding:.4rem 1rem;border-radius:2px;text-decoration:none;font-weight:500;transition:background .2s}
+.nav-cta{font-family:var(--mono);font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;background:var(--gold);color:#080808;padding:.5rem 1.25rem;border-radius:2px;text-decoration:none;font-weight:500;transition:background .2s}
 .nav-cta:hover{background:#d4b87a}
 .nav-ham{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:.25rem}
 .nav-ham span{width:22px;height:1.5px;background:var(--ink);display:block;transition:all .3s}
 
 /* ── HERO ── */
-.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;padding:0 2.5rem 5rem;position:relative;overflow:hidden}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 2.5rem;position:relative;overflow:hidden}
 .hero-bg{position:absolute;inset:0;z-index:0;background:var(--bg)}
 .hero-bg::after{content:'';position:absolute;inset:0}
-.hero-content{position:relative;z-index:1;max-width:680px;padding-top:8rem}
+.hero-content{position:relative;z-index:1;max-width:680px;padding-top:6rem}
 .hero-tag{font-family:var(--mono);font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem}
 .hero-tag::before{content:'';width:2rem;height:1px;background:var(--gold)}
 .hero h1{font-family:var(--mono);font-size:clamp(2.4rem,5.5vw,4.5rem);font-weight:500;line-height:1.05;letter-spacing:.02em;text-transform:uppercase;margin-bottom:1.5rem}
@@ -85,7 +85,13 @@ section{padding:7rem 2.5rem}
 .menu-cta{text-align:center;margin-top:3rem}
 
 
-/* ── SCROLL FADE MOBILE ── */
+/* ── MOBILE MENU ── */
+.mobile-menu{position:fixed;inset:0;background:rgba(8,8,8,.98);z-index:200;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2rem;opacity:0;pointer-events:none;transition:opacity .3s}
+.mobile-menu.open{opacity:1;pointer-events:all}
+.mobile-menu a{font-family:var(--mono);font-size:1.5rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink);text-decoration:none;transition:color .2s}
+.mobile-menu a:hover{color:var(--gold)}
+.mobile-menu-close{position:absolute;top:1.25rem;right:1.25rem;font-size:1.5rem;color:var(--dim);cursor:pointer;padding:.5rem;background:none;border:none}
+.mobile-menu-cta{margin-top:1rem;font-family:var(--mono);font-size:1rem;letter-spacing:.12em;text-transform:uppercase;background:var(--gold);color:#080808;padding:.75rem 2rem;border-radius:2px;text-decoration:none;font-weight:500}
 @media(max-width:768px){
   .hero{-webkit-mask-image:linear-gradient(to bottom,black 60%,transparent 100%);mask-image:linear-gradient(to bottom,black 60%,transparent 100%)}
 }
@@ -344,6 +350,16 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
   </div>
 </section>
 
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <button class="mobile-menu-close" onclick="toggleMenu()">✕</button>
+  <a href="#historia" onclick="toggleMenu()">Nosotros</a>
+  <a href="#menu" onclick="toggleMenu()">Menú</a>
+  <a href="#zona" onclick="toggleMenu()">Zona</a>
+  <a href="#contacto" onclick="toggleMenu()">Contacto</a>
+  <a href="https://racosushi.com.ar/menu.html" class="mobile-menu-cta">Hacer pedido →</a>
+</div>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-brand">Raco Sushi · San Isidro</div>
@@ -370,8 +386,9 @@ document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el))
 
 // Menu mobile
 function toggleMenu(){
-  // simple scroll to menu
-  document.querySelector('#menu').scrollIntoView({behavior:'smooth'})
+  const m=document.getElementById('mobile-menu')
+  m.classList.toggle('open')
+  document.body.style.overflow=m.classList.contains('open')?'hidden':''
 }
 </script>
 </body>
