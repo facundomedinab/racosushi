@@ -1015,7 +1015,6 @@ function renderOrdenes(){
           ${listoBtn}
           ${trackBtn}
           ${pagoBtn}
-          <button class="ord-btn" onclick="reenviar(${o.id})">↗ WA</button>
           <button class="ord-btn del" onclick="borrar(${o.id})">Eliminar</button>
         </div>
       </div>`
@@ -1084,14 +1083,12 @@ function renderAcumulado(){
     })
     html+=`</tbody></table>`
   }
-  let tIng=0,tEnv=0
-  ords.forEach(o=>{tIng+=o.total;tEnv+=o.envio||0})
+  let totalRolls=0,totalNigiris=0
+  ords.forEach(o=>{o.rq.forEach((q,i)=>totalRolls+=q);o.nq.forEach((q,i)=>totalNigiris+=q)})
   html+=`<div class="jornada-total">
-    <div class="jt-row"><span class="jt-lbl">Total jornada</span><span class="jt-val big">${money(tIng)}</span></div>
     <div class="jt-row"><span class="jt-lbl">Órdenes totales</span><span class="jt-val">${ords.length}</span></div>
-    <div class="jt-row"><span class="jt-lbl">Listas</span><span class="jt-val" style="color:var(--green)">${ords.filter(o=>o.listo).length}</span></div>
-    <div class="jt-row"><span class="jt-lbl">Pendientes</span><span class="jt-val" style="color:var(--accent)">${pendientes.length}</span></div>
-    ${ords.length>0?`<div class="jt-row"><span class="jt-lbl">Ticket promedio</span><span class="jt-val">${money(tIng/ords.length)}</span></div>`:''}
+    <div class="jt-row"><span class="jt-lbl">Rolls</span><span class="jt-val">${totalRolls}</span></div>
+    <div class="jt-row"><span class="jt-lbl">Nigiris</span><span class="jt-val">${totalNigiris}</span></div>
   </div>
   <button class="btn ghost" style="width:100%;margin-top:.75rem" onclick="copiarAcumulado()">Copiar lista de producción</button>`
   el.innerHTML=html
@@ -1244,7 +1241,7 @@ function renderRuta(){
   const ordenados=[...pendOptimizados,...listos]
 
   // URL Maps con addr limpia (sin dpto)
-  const stops=pendOptimizados.map(o=>encodeURIComponent(addrParaMaps(o)+', San Isidro, Buenos Aires'))
+  const stops=pendOptimizados.map(o=>encodeURIComponent(addrParaMaps(o)))
   const origen=encodeURIComponent(MI_DIR)
   let mapsUrl
   if(stops.length===0){
@@ -1283,7 +1280,7 @@ function renderRuta(){
       ...(o.eq||[]).map((q,i)=>q>0?`${q}x ${EXTRAS[i].n}`:'').filter(Boolean),
     ].join(', ')
     // Maps usa solo addr base
-    const mapsInd=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(MI_DIR)}&destination=${encodeURIComponent(addrParaMaps(o)+', San Isidro, Buenos Aires')}&travelmode=driving`
+    const mapsInd=`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(MI_DIR)}&destination=${encodeURIComponent(addrParaMaps(o))}&travelmode=driving`
 
     html+=`
       <div style="display:flex;align-items:stretch">
