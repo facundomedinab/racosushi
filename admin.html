@@ -846,17 +846,17 @@ function enviarTracking(id){
   const o=getOrdenes().find(o=>o.id===id)
   if(!o)return
   const tel=o.tel.replace(/\D/g,'')
-  const items=[
-    ...ROLLS.map((r,i)=>o.rq[i]>0?`${o.rq[i]}× ${r.n}`:'').filter(Boolean),
-    ...NIGIRIS.map((n,i)=>o.nq[i]>0?`${o.nq[i]}× ${n.n}`:'').filter(Boolean),
-  ].join(', ')
+  const lines=[]
+  let sub=0
+  ROLLS.forEach((r,i)=>{if(o.rq[i]>0){lines.push('- '+o.rq[i]+'x '+r.n+' - '+money(r.v*o.rq[i]));sub+=r.v*o.rq[i]}})
+  NIGIRIS.forEach((n,i)=>{if(o.nq[i]>0){lines.push('- '+o.nq[i]+'x '+n.n+' - '+money(n.v*o.nq[i]));sub+=n.v*o.nq[i]}})
+  if(o.eq)EXTRAS.forEach((e,i)=>{if(o.eq[i]>0){lines.push('- '+o.eq[i]+'x '+e.n+' - '+money(e.v*o.eq[i]));sub+=e.v*o.eq[i]}})
 
-  const addrParaMsg=o.addrDisplay||o.addr
-  let msg='*Tu pedido esta en camino!*\n\n'
-  msg+='Hola '+o.cliente+'! Tu sushi ya esta listo y saliendo ahora.\n\n'
-  msg+=items+'\n'
-  msg+='Total: *'+money(o.total)+'*'
-  if(addrParaMsg)msg+='\nDireccion: '+addrParaMsg
+  let msg='Hola '+o.cliente+'! Tu pedido esta en camino 🛵\n\n'
+  msg+=lines.join('\n')+'\n'
+  if(o.envio>0)msg+='\nSubtotal: '+money(sub)+'\nEnvio: '+money(o.envio)
+  msg+='\n*TOTAL: '+money(o.total)+'*'
+  if(o.nota)msg+='\nNota: '+o.nota
   msg+='\n\nGracias por tu pedido!'
 
   const enc=encodeURIComponent(msg)
