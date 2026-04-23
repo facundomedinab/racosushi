@@ -19,6 +19,27 @@
 .login-btn:hover{background:#d4b87a}
 .login-error{font-size:.72rem;color:#f87171;font-family:'DM Mono',monospace;display:none}
 
+
+/* ── ADMIN HEADER ── */
+.admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.user-menu-wrap{position:relative}
+.user-btn{background:var(--surface);border:.5px solid var(--border2);border-radius:5px;padding:.35rem .75rem;font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:all .15s}
+.user-btn:hover{border-color:var(--accent2);color:var(--accent)}
+.user-arrow{font-size:.5rem;transition:transform .2s}
+.user-arrow.open{transform:rotate(180deg)}
+.user-dropdown{position:absolute;right:0;top:calc(100% + .4rem);width:240px;background:var(--surface);border:.5px solid var(--border2);border-radius:6px;padding:.65rem;z-index:50;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.user-dropdown.open{display:block}
+.ud-title{font-family:var(--mono);font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.ud-row{display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;font-size:.75rem;color:var(--dim);border-bottom:.5px solid var(--border)}
+.ud-row:last-of-type{border-bottom:none}
+.ud-val{font-family:var(--mono);font-size:.72rem;color:var(--text2)}
+.ud-val.accent{color:var(--accent)}
+.ud-val.green{color:var(--green)}
+.ud-val.blue{color:var(--blue)}
+.ud-divider{height:.5px;background:var(--border2);margin:.5rem 0}
+.ud-logout{width:100%;margin-top:.4rem;padding:.45rem;background:transparent;border:.5px solid var(--border2);border-radius:4px;font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--red);cursor:pointer;transition:all .15s}
+.ud-logout:hover{background:#1a0808;border-color:var(--red)}
+
 /* APP */
 .app-wrap{display:none}
 .app-wrap.visible{display:block}
@@ -32,7 +53,7 @@
   --green:#6fcf97;--red:#eb5757;--blue:#60a5fa;
   --sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
 }
-html{font-size:14px}
+html{font-size:15px}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding-bottom:6rem}
 .app{max-width:640px;margin:0 auto;padding:1.5rem 1rem}
 .logo{font-family:var(--mono);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:1.25rem}
@@ -209,7 +230,28 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 <div class="app-wrap" id="app-wrap">
 
 <div class="app">
-  <div class="logo">Raco Sushi · Jornada</div>
+  <div class="admin-header">
+    <div class="logo">Raco Sushi · Admin</div>
+    <div class="user-menu-wrap">
+      <button class="user-btn" onclick="toggleUserMenu()">
+        <span id="user-summary">Jornada</span>
+        <span class="user-arrow" id="user-arrow">▾</span>
+      </button>
+      <div class="user-dropdown" id="user-dropdown">
+        <div class="ud-title">Resumen de jornada</div>
+        <div class="ud-row"><span>Pendientes</span><span id="ud-pendientes" class="ud-val">—</span></div>
+        <div class="ud-row"><span>Listos</span><span id="ud-listos" class="ud-val">—</span></div>
+        <div class="ud-row"><span>Total recaudado</span><span id="ud-total" class="ud-val accent">—</span></div>
+        <div class="ud-row"><span>MP pendiente</span><span id="ud-mp" class="ud-val blue">—</span></div>
+        <div class="ud-row"><span>MP confirmado</span><span id="ud-mp-ok" class="ud-val green">—</span></div>
+        <div class="ud-divider"></div>
+        <div class="ud-row"><span>Alias MP</span><span class="ud-val">facundomb.mp</span></div>
+        <div class="ud-row"><span>WhatsApp</span><span class="ud-val">3816174410</span></div>
+        <div class="ud-divider"></div>
+        <button class="ud-logout" onclick="cerrarSesion()">Cerrar sesión →</button>
+      </div>
+    </div>
+  </div>
   <nav class="tabs">
     <button class="tab on"  onclick="goTab('nueva',this)">Nueva orden</button>
     <button class="tab"     onclick="goTab('ordenes',this)">Órdenes <span id="tab-cnt" style="opacity:.6"></span></button>
@@ -1360,6 +1402,7 @@ function checkPwd(){
     document.getElementById('login-wrap').classList.add('hidden')
     document.getElementById('app-wrap').classList.add('visible')
     sessionStorage.setItem('raco_auth', PASS)
+    setTimeout(updateUserMenu, 500)
   } else {
     document.getElementById('login-error').style.display = 'block'
     document.getElementById('pwd-input').value = ''
@@ -1367,10 +1410,63 @@ function checkPwd(){
   }
 }
 
+function cerrarSesion(){
+  sessionStorage.removeItem('raco_auth')
+  document.getElementById('login-wrap').classList.remove('hidden')
+  document.getElementById('app-wrap').classList.remove('visible')
+  document.getElementById('pwd-input').value = ''
+  document.getElementById('login-error').style.display = 'none'
+  document.getElementById('user-dropdown').classList.remove('open')
+  document.getElementById('user-arrow').classList.remove('open')
+}
+
+function toggleUserMenu(){
+  const dd = document.getElementById('user-dropdown')
+  const ar = document.getElementById('user-arrow')
+  const isOpen = dd.classList.toggle('open')
+  ar.classList.toggle('open', isOpen)
+  if(isOpen) updateUserMenu()
+}
+
+function updateUserMenu(){
+  try {
+    const ords = JSON.parse(localStorage.getItem('sushi_ordenes') || '[]')
+    const pendientes = ords.filter(o => !o.listo).length
+    const listos = ords.filter(o => o.listo).length
+    const total = ords.reduce((a, o) => a + (o.total || 0), 0)
+    const mpPend = ords.filter(o => {
+      const esMP = o.pago && (o.pago.toLowerCase().includes('mercado') || o.pago.toLowerCase().includes('mp'))
+      return esMP && !o.pagado
+    }).reduce((a, o) => a + (o.total || 0), 0)
+    const mpOk = ords.filter(o => {
+      const esMP = o.pago && (o.pago.toLowerCase().includes('mercado') || o.pago.toLowerCase().includes('mp'))
+      return esMP && o.pagado
+    }).reduce((a, o) => a + (o.total || 0), 0)
+    const money = n => '$' + Math.round(n).toLocaleString('es-AR')
+    document.getElementById('ud-pendientes').textContent = pendientes
+    document.getElementById('ud-listos').textContent = listos
+    document.getElementById('ud-total').textContent = money(total)
+    document.getElementById('ud-mp').textContent = money(mpPend)
+    document.getElementById('ud-mp-ok').textContent = money(mpOk)
+    // Badge en el botón
+    document.getElementById('user-summary').textContent = pendientes + ' pendiente' + (pendientes !== 1 ? 's' : '')
+  } catch(e) {}
+}
+
+// Cerrar dropdown al hacer click afuera
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.user-menu-wrap')
+  if(wrap && !wrap.contains(e.target)){
+    document.getElementById('user-dropdown').classList.remove('open')
+    document.getElementById('user-arrow').classList.remove('open')
+  }
+})
+
 // Si ya estaba autenticado en esta sesión
 if(sessionStorage.getItem('raco_auth') === PASS){
   document.getElementById('login-wrap').classList.add('hidden')
   document.getElementById('app-wrap').classList.add('visible')
+  setTimeout(updateUserMenu, 500)
 }
 </script>
 </body>
