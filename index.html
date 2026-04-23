@@ -174,10 +174,10 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
 .ing-header{margin-bottom:3rem}
 .ing-carousel-wrap{position:relative;display:flex;align-items:center;gap:1rem}
 .ing-track-wrap{overflow:hidden;flex:1}
-.ing-track{display:flex;gap:1.5px;transition:transform .4s ease}
-.ing-card{flex:0 0 calc(33.333% - 1px);background:#0c0c0c;overflow:hidden;min-width:0}
-.ing-img-wrap{aspect-ratio:2/3;overflow:hidden;background:#111;height:380px}
-.ing-img-wrap img{width:100%;height:100%;object-fit:contain;filter:brightness(.95);transition:all .5s ease;padding:.5rem;background:#0c0c0c}
+.ing-track{display:flex;gap:0;transition:transform .4s ease}
+.ing-card{flex:0 0 33.333%;background:#0c0c0c;overflow:hidden;min-width:0}
+.ing-img-wrap{overflow:hidden;height:420px;background:#111}
+.ing-img-wrap img{width:100%;height:100%;object-fit:cover;object-position:center 20%;filter:brightness(.9);transition:all .5s ease}
 .ing-card:hover .ing-img-wrap img{filter:brightness(1);transform:scale(1.03)}
 .ing-info{padding:.85rem 1rem;border-top:.5px solid var(--border)}
 .ing-name{font-family:var(--mono);font-size:.82rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
@@ -188,7 +188,7 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
 .ing-dot.on{background:var(--accent)}
 @media(max-width:768px){
   .ing-sec{padding:5rem 1.25rem}
-  .ing-card{flex:0 0 calc(50% - 1px)}
+  .ing-card{flex:0 0 50%}
   .ing-arrow{display:none}
 }
 @media(max-width:480px){
