@@ -361,9 +361,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     <div id="ord-list"><div class="empty-hist">No hay órdenes todavía</div></div>
   </div>
 
+
   <!-- ACUMULADO -->
   <div id="tab-acumulado" class="panel">
     <div id="acu-wrap"><div class="empty-hist">Guardá órdenes para ver el acumulado</div></div>
+  </div>
+
+  <!-- RUTA DEL DÍA -->
+  <div id="tab-ruta" class="panel">
+    <div id="ruta-wrap"><div class="empty-hist">Agregá direcciones a las órdenes para ver la ruta</div></div>
+  </div>
+
+  <!-- STOCK -->
+  <div id="tab-stock" class="panel">
+    <div id="stock-wrap"><div class="empty-hist">Cargando stock...</div></div>
   </div>
 
   <!-- ESTADÍSTICAS -->
@@ -371,23 +382,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     <div id="stats-wrap"><div class="empty-hist">Guardá órdenes para ver estadísticas</div></div>
   </div>
 
-  <!-- RUTA DEL DÍA -->
-  <div id="tab-ruta" class="panel">
-    <div id="ruta-wrap"><div class="empty-hist">Agregá direcciones a las órdenes para ver la ruta</div></div>
-  
-    <div id="tab-acumulado" class="panel">
-      <div id="acu-wrap"><div class="empty-hist">Guardá órdenes para ver el acumulado</div></div>
-    </div>
-    <div id="tab-stats" class="panel">
-      <div id="stats-wrap"><div class="empty-hist">Guardá órdenes para ver estadísticas</div></div>
-    </div>
-    <div id="tab-ruta" class="panel">
-      <div id="ruta-wrap"><div class="empty-hist">Agregá direcciones a las órdenes para ver la ruta</div></div>
-    </div>
-    <div id="tab-stock" class="panel">
-      <div id="stock-wrap"><div class="empty-hist">Cargando stock...</div></div>
-    </div>
-  </div>
   <div class="toast" id="toast"></div>
 <!-- MODAL PASTE WA -->
 <div class="overlay" id="paste-overlay" onclick="cerrarPasteClick(event)">
