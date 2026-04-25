@@ -2113,47 +2113,58 @@ function importarInsumosCSV(input){
     const text = e.target.result.replace(/^\uFEFF/,'')
     const lines = text.split('\n').filter(l=>l.trim())
     const SEP = lines[0].includes(';') ? ';' : ','
-    let updated = 0, added = 0, skipped = 0
+    let count = 0
+
+    // Clear all saved overrides and custom ingredients — full replace
+    Object.keys(localStorage).forEach(k => {
+      if(k.startsWith('raco_ins_')) localStorage.removeItem(k)
+    })
+    localStorage.removeItem('raco_ins_custom')
+    const newCustom = {}
+
     lines.slice(1).forEach(line => {
       const parts = line.split(SEP)
       if(parts.length < 3) return
       const nombre = parts[0].trim()
       const unidad = parts[1]?.trim() || 'kg'
-      // Fix comma decimals: "0,5" -> "0.5"
       const precioStr = parts[2].trim().replace(',','.')
       const precio = parseFloat(precioStr)
       const cat = parts[3]?.trim() || 'Personalizados'
-      if(!nombre || isNaN(precio) || precio <= 0){ skipped++; return }
+      if(!nombre || isNaN(precio) || precio <= 0) return
 
-      // Try to match existing key by name
+      // Match existing key by name
       let key = Object.keys(INSUMOS_BASE).find(k =>
         INSUMOS_BASE[k].n.replace(/[,;]/g,'').toLowerCase() === nombre.toLowerCase()
       )
 
       if(key){
+        // Update price and categoria on existing
         localStorage.setItem('raco_ins_'+key, precio)
-        // Update categoria if provided
-        if(cat) INSUMOS_BASE[key].cat = cat
-        updated++
+        INSUMOS_BASE[key].cat = cat
+        INSUMOS_BASE[key].unit = unidad
       } else {
-        // New ingredient
+        // New ingredient — generate key
         key = nombre.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')
-        if(!INSUMOS_BASE[key]){
-          INSUMOS_BASE[key] = {n:nombre, pg:precio, unit:unidad, cat}
-          added++
-        } else {
-          INSUMOS_BASE[key].cat = cat
-        }
-        // Persist to localStorage
-        const custom = JSON.parse(localStorage.getItem('raco_ins_custom')||'{}')
-        custom[key] = {n:nombre, pg:precio, unit:unidad, cat}
-        localStorage.setItem('raco_ins_custom', JSON.stringify(custom))
+        INSUMOS_BASE[key] = {n:nombre, pg:precio, unit:unidad, cat}
         localStorage.setItem('raco_ins_'+key, precio)
+        newCustom[key] = {n:nombre, pg:precio, unit:unidad, cat}
       }
+      count++
     })
+
+    // Remove custom ingredients that are no longer in CSV
+    const csvNames = lines.slice(1).map(l=>l.split(SEP)[0]?.trim().toLowerCase()).filter(Boolean)
+    const prevCustom = JSON.parse(localStorage.getItem('raco_ins_custom')||'{}')
+    Object.keys(prevCustom).forEach(k => {
+      const stillPresent = csvNames.includes(INSUMOS_BASE[k]?.n?.toLowerCase())
+      if(!stillPresent) delete INSUMOS_BASE[k]
+    })
+
+    if(Object.keys(newCustom).length) localStorage.setItem('raco_ins_custom', JSON.stringify(newCustom))
+
     renderInsumos()
     if(document.getElementById('tab-costos').classList.contains('on')) renderCostos()
-    showToast(`Insumos: ${updated} actualizados${added?' · '+added+' nuevos':''}${skipped?' · '+skipped+' saltados':''}`)
+    showToast(`✓ ${count} insumos cargados desde CSV`)
     input.value = ''
   }
   reader.readAsText(file)
