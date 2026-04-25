@@ -2057,24 +2057,39 @@ function renderInsumos(){
   const el = document.getElementById('insumos-lista')
   if(!el) return
   let html = ''
+
+  // Helper to render one row
+  const row = (k, ins, val) => `<div class="ins-row">
+    <div>
+      <div class="ins-nombre">${ins.n}</div>
+      <div class="ins-proveedor">${ins.unit||''}</div>
+    </div>
+    <input class="ins-inp" type="number" step="0.1" value="${Math.round(val*10)/10}"
+      onchange="updateInsumo('${k}',this.value)" title="Precio por g/ml">
+    <span class="ins-unit">$/g</span>
+  </div>`
+
+  // Standard groups
   INSUMOS_GRUPOS.forEach(grupo => {
     html += `<div class="ins-section"><div class="ins-section-title">${grupo.titulo}</div>`
     grupo.keys.forEach(k => {
-      const ins = INSUMOS_BASE[k]
-      const val = getP(k)
-      html += `<div class="ins-row">
-        <div>
-          <div class="ins-nombre">${ins.n}</div>
-          <div class="ins-proveedor">${ins.unit}</div>
-        </div>
-        <input class="ins-inp" type="number" step="0.1" value="${Math.round(val*10)/10}"
-          onchange="updateInsumo('${k}',this.value)"
-          title="Precio por g/ml">
-        <span class="ins-unit">$/g</span>
-      </div>`
+      if(!INSUMOS_BASE[k]) return
+      html += row(k, INSUMOS_BASE[k], getP(k))
     })
     html += `</div>`
   })
+
+  // Custom ingredients (from CSV import) not in any standard group
+  const allStdKeys = INSUMOS_GRUPOS.flatMap(g=>g.keys)
+  const customKeys = Object.keys(INSUMOS_BASE).filter(k => !allStdKeys.includes(k))
+  if(customKeys.length){
+    html += `<div class="ins-section"><div class="ins-section-title">✦ Personalizados</div>`
+    customKeys.forEach(k => {
+      html += row(k, INSUMOS_BASE[k], getP(k))
+    })
+    html += `</div>`
+  }
+
   el.innerHTML = html
 }
 
