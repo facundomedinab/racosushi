@@ -388,28 +388,26 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
   <div class="eventos-inner">
     <div class="fade-up">
       <div class="section-tag">Eventos & Catering</div>
-      <h2 class="section-title"><span class="c-gold">Eventos y</span> Catering</h2>
+      <h2 class="section-title"><span class="c-sal">Eventos</span> y Catering</h2>
       <p class="eventos-propuesta">Nuestra Propuesta</p>
       <p style="color:var(--dim);line-height:1.8;font-weight:300;font-size:1rem">El equipo Raco está preparado para brindar un servicio gastronómico de sushi y cocina, cuidando cada detalle en términos de calidad y estética manteniendo así los estándares que deseamos. Nos ocupamos de todos los detalles para que vos y tus invitados vivan una experiencia única.</p>
-      <div style="margin-top:2.5rem">
-        <a href="#ev-form-wrap" class="btn-primary" style="display:inline-flex" onclick="document.getElementById('ev-form-wrap').scrollIntoView({behavior:'smooth'});return false">Consulta · Presupuesto →</a>
-      </div>
+
     </div>
     <div class="fade-up" id="ev-form-wrap">
-      <div class="eventos-form-wrap">
+      <div class="eventos-form-wrap" style="margin-top:1rem">
         <div class="eventos-form-title">Formulario de Consulta</div>
-        <p class="eventos-wa-link">Para consultas sobre Eventos envianos un WhatsApp al +54 9 381 617-4410 o <a href="https://wa.me/5493816174410?text=Hola%20Raco%20Sushi%2C%20quiero%20consultar%20sobre%20eventos%20y%20catering" target="_blank">haciendo click aquí</a></p>
+        <p class="eventos-wa-link">Para consultas sobre Eventos y Catering, completar el formulario y envianos la consulta. Te contactaremos a la brevedad.</p>
         <form class="ev-form" onsubmit="enviarConsultaEvento(event)">
           <div class="ev-row">
-            <div class="ev-field"><label>Nombre</label><input type="text" id="ev-nombre" placeholder="Tu nombre" required></div>
-            <div class="ev-field"><label>Apellido</label><input type="text" id="ev-apellido" placeholder="Tu apellido" required></div>
+            <div class="ev-field"><label>Nombre</label><input type="text" id="ev-nombre"  required></div>
+            <div class="ev-field"><label>Apellido</label><input type="text" id="ev-apellido"  required></div>
           </div>
           <div class="ev-row">
-            <div class="ev-field"><label>Email</label><input type="email" id="ev-email" placeholder="tu@email.com"></div>
-            <div class="ev-field"><label>Teléfono</label><input type="tel" id="ev-tel" placeholder="11 1234-5678" required></div>
+            <div class="ev-field"><label>Email</label><input type="email" id="ev-email" ></div>
+            <div class="ev-field"><label>Teléfono</label><input type="tel" id="ev-tel"  required></div>
           </div>
           <div class="ev-row">
-            <div class="ev-field"><label>Empresa</label><input type="text" id="ev-empresa" placeholder="Empresa (opcional)"></div>
+            <div class="ev-field"><label>Empresa</label><input type="text" id="ev-empresa" ></div>
             <div class="ev-field"><label>Tipo de Evento</label>
               <select id="ev-evento">
                 <option value="">Seleccionar...</option>
@@ -423,14 +421,14 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
           </div>
           <div class="ev-row">
             <div class="ev-field"><label>Fecha estimada</label><input type="date" id="ev-fecha"></div>
-            <div class="ev-field"><label>Horario</label><input type="text" id="ev-horario" placeholder="Ej: 20:00 hs"></div>
+            <div class="ev-field"><label>Horario</label><input type="text" id="ev-horario" ></div>
           </div>
           <div class="ev-row">
-            <div class="ev-field"><label>Cantidad de personas</label><input type="number" id="ev-cantidad" min="1" placeholder="Ej: 50"></div>
-            <div class="ev-field"><label>Lugar</label><input type="text" id="ev-lugar" placeholder="Dirección o salón"></div>
+            <div class="ev-field"><label>Cantidad de personas</label><input type="number" id="ev-cantidad" min="1" ></div>
+            <div class="ev-field"><label>Lugar</label><input type="text" id="ev-lugar" ></div>
           </div>
-          <div class="ev-field"><label>Mensaje</label><textarea id="ev-mensaje" placeholder="Contanos más sobre tu evento..."></textarea></div>
-          <button type="submit" class="ev-submit">Enviar consulta →</button>
+          <div class="ev-field"><label>Mensaje</label><textarea id="ev-mensaje" ></textarea></div>
+          <button type="submit" class="ev-submit" style="padding:1rem 2.5rem;font-size:.8rem;letter-spacing:.15em;margin-top:1rem">Enviar consulta vía WhatsApp →</button>
         </form>
       </div>
     </div>
