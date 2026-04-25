@@ -2325,6 +2325,9 @@ function importarRecetasCSV(input){
     const SEP = firstLine.includes(';') ? ';' : ','
     let updated=0, added=0
 
+    // Parse ALL rows first, then replace arrays entirely
+    const newRolls = [], newNigiris = []
+
     lines.slice(1).forEach(line => {
       const parts = line.split(SEP).map(p=>p.trim())
       const tipo   = parts[0]
@@ -2332,7 +2335,6 @@ function importarRecetasCSV(input){
       const pv     = parseFloat(parts[2])
       if(!tipo||!nombre||isNaN(pv)) return
 
-      // Parse ingredients — skip empty pairs
       const ings = []
       for(let i=3;i<parts.length-1;i+=2){
         const k=parts[i]?.trim(), g=parseFloat(parts[i+1])
@@ -2341,23 +2343,26 @@ function importarRecetasCSV(input){
           ings.push({k, g, desc})
         }
       }
+      if(!ings.length) return
 
-      // Save price override
+      // Preserve any saved price from localStorage if not in CSV
       localStorage.setItem('raco_rec_'+tipo+'_'+nombre.replace(/[^a-zA-Z0-9]/g,'_')+'_pv', pv)
 
-      const arr = tipo==='roll' ? RECETAS_ROLLS : tipo==='nigiri' ? RECETAS_NIGIRIS : null
-      if(!arr) return
-      const idx = arr.findIndex(r=>r.n===nombre)
-      if(idx>=0){
-        if(ings.length) arr[idx].ingredientes = ings
-        arr[idx].pv = pv
-        updated++
-      } else {
-        if(!ings.length){ showToast('Nuevo roll sin ingredientes válidos: '+nombre); return }
-        arr.push({n:nombre, pv, ingredientes:ings})
-        added++
-      }
+      if(tipo==='roll') newRolls.push({n:nombre, pv, ingredientes:ings})
+      else if(tipo==='nigiri') newNigiris.push({n:nombre, pv, ingredientes:ings})
     })
+
+    // Replace arrays entirely so deletions/renames are reflected
+    if(newRolls.length){
+      RECETAS_ROLLS.length = 0
+      newRolls.forEach(r => RECETAS_ROLLS.push(r))
+      updated = newRolls.length
+    }
+    if(newNigiris.length){
+      RECETAS_NIGIRIS.length = 0
+      newNigiris.forEach(r => RECETAS_NIGIRIS.push(r))
+      updated += newNigiris.length
+    }
 
     syncPreciosMenu()
     // Rebuild compras simulator inputs
@@ -2366,7 +2371,7 @@ function importarRecetasCSV(input){
     if(simR) simR.innerHTML=''
     if(simN) simN.innerHTML=''
     renderCostos()
-    showToast(`Recetas: ${updated} actualizadas${added?' · '+added+' nuevas':''}`)
+    showToast(`✓ ${newRolls.length} rolls y ${newNigiris.length} nigiris cargados`)
     input.value=''
   }
   reader.readAsText(file)
