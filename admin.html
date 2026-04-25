@@ -1761,7 +1761,7 @@ let RECETAS_NIGIRIS = [
   ]},
 ]
 
-const RECETAS_SALSAS = [
+let RECETAS_SALSAS = [
   {n:'Ají Amarillo Nikkei',  k:'aji',     batch:100, usoRoll:10, usoNig:5,  ingredientes:[
     {k:'kewpie',g:65},{k:'aji_pasta',g:30},{k:'lima',g:3},{k:'soja',g:1.5},{k:'sesamo_ac',g:0.5}
   ]},
@@ -1825,9 +1825,10 @@ function filtrarCostos(f, btn){
   const saved = localStorage.getItem('raco_recetas_custom')
   if(!saved) return
   try {
-    const {rolls, nigiris} = JSON.parse(saved)
+    const {rolls, nigiris, salsas} = JSON.parse(saved)
     if(rolls?.length)  RECETAS_ROLLS  = rolls.map(r=>({...r}))
     if(nigiris?.length) RECETAS_NIGIRIS = nigiris.map(r=>({...r}))
+    if(salsas?.length)  RECETAS_SALSAS  = salsas.map(s=>({...s}))
     // Also sync ROLLS/NIGIRIS for orders panel
     if(rolls?.length){
       ROLLS.length=0
@@ -2446,7 +2447,7 @@ function importarRecetasCSV(input){
     let updated=0, added=0
 
     // Parse ALL rows first, then replace arrays entirely
-    const newRolls = [], newNigiris = []
+    const newRolls = [], newNigiris = [], newSalsas = []
 
     lines.slice(1).forEach(line => {
       const parts = line.split(SEP).map(p=>p.trim())
@@ -2470,34 +2471,39 @@ function importarRecetasCSV(input){
 
       if(tipo==='roll') newRolls.push({n:nombre, pv, ingredientes:ings})
       else if(tipo==='nigiri') newNigiris.push({n:nombre, pv, ingredientes:ings})
+      else if(tipo==='salsa'){
+        // Try to preserve k, usoRoll, usoNig from existing salsa
+        const existing = RECETAS_SALSAS.find(s=>s.n===nombre)
+        newSalsas.push({
+          n:nombre,
+          k: existing?.k || nombre.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_'),
+          batch: pv,
+          usoRoll: existing?.usoRoll || 10,
+          usoNig:  existing?.usoNig  || 5,
+          ingredientes: ings
+        })
+      }
     })
 
-    // Replace arrays entirely so deletions/renames are reflected
-    if(newRolls.length){
-      RECETAS_ROLLS.length = 0
-      newRolls.forEach(r => RECETAS_ROLLS.push(r))
-      updated = newRolls.length
-    }
-    if(newNigiris.length){
-      RECETAS_NIGIRIS.length = 0
-      newNigiris.forEach(r => RECETAS_NIGIRIS.push(r))
-      updated += newNigiris.length
-    }
+    // Replace arrays entirely
+    if(newRolls.length){   RECETAS_ROLLS.length=0;   newRolls.forEach(r=>RECETAS_ROLLS.push(r)) }
+    if(newNigiris.length){ RECETAS_NIGIRIS.length=0; newNigiris.forEach(r=>RECETAS_NIGIRIS.push(r)) }
+    if(newSalsas.length){  RECETAS_SALSAS.length=0;  newSalsas.forEach(s=>RECETAS_SALSAS.push(s)) }
 
-    // Persist to localStorage so they survive reload
+    // Persist to localStorage
     localStorage.setItem('raco_recetas_custom', JSON.stringify({
-      rolls: RECETAS_ROLLS.map(r=>({n:r.n, pv:r.pv, ingredientes:r.ingredientes})),
-      nigiris: RECETAS_NIGIRIS.map(r=>({n:r.n, pv:r.pv, ingredientes:r.ingredientes}))
+      rolls:   RECETAS_ROLLS.map(r=>({n:r.n, pv:r.pv, ingredientes:r.ingredientes})),
+      nigiris: RECETAS_NIGIRIS.map(r=>({n:r.n, pv:r.pv, ingredientes:r.ingredientes})),
+      salsas:  RECETAS_SALSAS.map(s=>({n:s.n, k:s.k, batch:s.batch, usoRoll:s.usoRoll, usoNig:s.usoNig, ingredientes:s.ingredientes}))
     }))
 
     syncPreciosMenu()
-    // Rebuild compras simulator inputs
     const simR = document.getElementById('sim-rolls')
     const simN = document.getElementById('sim-nigiris')
     if(simR) simR.innerHTML=''
     if(simN) simN.innerHTML=''
     renderCostos()
-    showToast(`✓ ${newRolls.length} rolls y ${newNigiris.length} nigiris cargados`)
+    showToast(`✓ ${newRolls.length} rolls · ${newNigiris.length} nigiris · ${newSalsas.length} salsas`)
     input.value=''
   }
   reader.readAsText(file)
