@@ -396,20 +396,20 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
     <div class="fade-up" id="ev-form-wrap">
       <div class="eventos-form-wrap" style="margin-top:1rem">
         <div class="eventos-form-title">Formulario de Consulta</div>
-        <p class="eventos-wa-link">Para consultas sobre Eventos y Catering, completar el formulario y envianos la consulta. Te contactaremos a la brevedad.</p>
+        <p class="eventos-wa-link" style="margin-bottom:1.5rem">Para consultas sobre Eventos y Catering, completar el formulario y envianos la consulta. Te contactaremos a la brevedad.</p>
         <form class="ev-form" onsubmit="enviarConsultaEvento(event)">
           <div class="ev-row">
-            <div class="ev-field"><label>Nombre</label><input type="text" id="ev-nombre"  required></div>
-            <div class="ev-field"><label>Apellido</label><input type="text" id="ev-apellido"  required></div>
+            <div class="ev-field"><label>Nombre</label><input type="text" id="ev-nombre" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box" required></div>
+            <div class="ev-field"><label>Apellido</label><input type="text" id="ev-apellido" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box" required></div>
           </div>
           <div class="ev-row">
-            <div class="ev-field"><label>Email</label><input type="email" id="ev-email" ></div>
-            <div class="ev-field"><label>Teléfono</label><input type="tel" id="ev-tel"  required></div>
+            <div class="ev-field"><label>Email</label><input type="email" id="ev-email" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box"></div>
+            <div class="ev-field"><label>Teléfono</label><input type="tel" id="ev-tel" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box" required></div>
           </div>
           <div class="ev-row">
-            <div class="ev-field"><label>Empresa</label><input type="text" id="ev-empresa" ></div>
+            <div class="ev-field"><label>Empresa</label><input type="text" id="ev-empresa" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box"></div>
             <div class="ev-field"><label>Tipo de Evento</label>
-              <select id="ev-evento" style="background:#111;border:.5px solid #333;border-radius:2px;padding:.6rem .85rem;color:#efefef;font-family:inherit;font-size:.88rem;outline:none;width:100%;box-sizing:border-box">
+              <select id="ev-evento" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.5rem .6rem;color:#efefef;font-size:.85rem;outline:none">
                 <option value="">Seleccionar...</option>
                 <option>Cumpleaños</option>
                 <option>Casamiento</option>
@@ -420,12 +420,12 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
             </div>
           </div>
           <div class="ev-row">
-            <div class="ev-field"><label>Fecha estimada</label><input type="date" id="ev-fecha"></div>
-            <div class="ev-field"><label>Horario</label><input type="text" id="ev-horario" ></div>
+            <div class="ev-field"><label>Fecha estimada</label><input type="date" id="ev-fecha" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box"></div>
+            <div class="ev-field"><label>Horario</label><input type="text" id="ev-horario" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box"></div>
           </div>
           <div class="ev-row">
-            <div class="ev-field"><label>Cantidad de personas</label><input type="number" id="ev-cantidad" min="1" ></div>
-            <div class="ev-field"><label>Lugar</label><input type="text" id="ev-lugar" ></div>
+            <div class="ev-field"><label>Cantidad de personas</label><input type="number" id="ev-cantidad" min="1" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box"></div>
+            <div class="ev-field"><label>Lugar</label><input type="text" id="ev-lugar" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box"></div>
           </div>
           <div class="ev-field"><label>Mensaje</label><textarea id="ev-mensaje" style="background:#111;border:.5px solid #333;border-radius:2px;padding:.6rem .85rem;color:#efefef;font-family:inherit;font-size:.88rem;outline:none;width:100%;box-sizing:border-box;resize:vertical;min-height:80px" ></textarea></div>
           <button type="submit" class="ev-submit" style="background:#c9a96e;color:#080808;border:none;padding:.75rem 2rem;font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:500;cursor:pointer;border-radius:2px;margin-top:.75rem;transition:background .2s" onmouseover="this.style.background='#d4b87a'" onmouseout="this.style.background='#c9a96e'">Enviar consulta vía WhatsApp →</button>
