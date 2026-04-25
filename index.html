@@ -409,7 +409,7 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
           <div class="ev-row">
             <div class="ev-field"><label>Empresa</label><input type="text" id="ev-empresa" ></div>
             <div class="ev-field"><label>Tipo de Evento</label>
-              <select id="ev-evento">
+              <select id="ev-evento" style="background:#111;border:.5px solid #333;border-radius:2px;padding:.6rem .85rem;color:#efefef;font-family:inherit;font-size:.88rem;outline:none;width:100%;box-sizing:border-box">
                 <option value="">Seleccionar...</option>
                 <option>Cumpleaños</option>
                 <option>Casamiento</option>
@@ -427,8 +427,8 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
             <div class="ev-field"><label>Cantidad de personas</label><input type="number" id="ev-cantidad" min="1" ></div>
             <div class="ev-field"><label>Lugar</label><input type="text" id="ev-lugar" ></div>
           </div>
-          <div class="ev-field"><label>Mensaje</label><textarea id="ev-mensaje" ></textarea></div>
-          <button type="submit" class="ev-submit" style="padding:1rem 2.5rem;font-size:.8rem;letter-spacing:.15em;margin-top:1rem">Enviar consulta vía WhatsApp →</button>
+          <div class="ev-field"><label>Mensaje</label><textarea id="ev-mensaje" style="background:#111;border:.5px solid #333;border-radius:2px;padding:.6rem .85rem;color:#efefef;font-family:inherit;font-size:.88rem;outline:none;width:100%;box-sizing:border-box;resize:vertical;min-height:80px" ></textarea></div>
+          <button type="submit" class="ev-submit" style="background:#c9a96e;color:#080808;border:none;padding:.75rem 2rem;font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:500;cursor:pointer;border-radius:2px;margin-top:.75rem;transition:background .2s" onmouseover="this.style.background='#d4b87a'" onmouseout="this.style.background='#c9a96e'">Enviar consulta vía WhatsApp →</button>
         </form>
       </div>
     </div>
@@ -592,45 +592,45 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>
 function enviarConsultaEvento(e){
   e.preventDefault()
-  const g = (id) => document.getElementById(id)?.value?.trim() || ''
-  const nombre   = g('ev-nombre')
-  const apellido = g('ev-apellido')
-  const email    = g('ev-email')
-  const tel      = g('ev-tel')
-  const empresa  = g('ev-empresa')
-  const evento   = g('ev-evento')
-  const fecha    = g('ev-fecha')
-  const horario  = g('ev-horario')
-  const cantidad = g('ev-cantidad')
-  const lugar    = g('ev-lugar')
-  const mensaje  = g('ev-mensaje')
+  var g = function(id){ var el = document.getElementById(id); return el ? el.value.trim() : '' }
+  var nombre   = g('ev-nombre')
+  var apellido = g('ev-apellido')
+  var email    = g('ev-email')
+  var tel      = g('ev-tel')
+  var empresa  = g('ev-empresa')
+  var evento   = g('ev-evento')
+  var fecha    = g('ev-fecha')
+  var horario  = g('ev-horario')
+  var cantidad = g('ev-cantidad')
+  var lugar    = g('ev-lugar')
+  var mensaje  = g('ev-mensaje')
 
-  let msg = '🍣 *CONSULTA EVENTO - RACO SUSHI*
+  var msg = '🍣 *CONSULTA EVENTO - RACO SUSHI*
 
 '
-  msg += `👤 *Nombre:* ${nombre} ${apellido}
-`
-  if(email)   msg += `📧 *Email:* ${email}
-`
-  msg += `📱 *Teléfono:* ${tel}
-`
-  if(empresa) msg += `🏢 *Empresa:* ${empresa}
-`
-  if(evento)  msg += `🎉 *Tipo de evento:* ${evento}
-`
-  if(fecha)   msg += `📅 *Fecha:* ${fecha}
-`
-  if(horario) msg += `🕐 *Horario:* ${horario}
-`
-  if(cantidad)msg += `👥 *Personas:* ${cantidad}
-`
-  if(lugar)   msg += `📍 *Lugar:* ${lugar}
-`
-  if(mensaje) msg += `
-💬 *Mensaje:* ${mensaje}
-`
+  msg += '👤 *Nombre:* ' + nombre + ' ' + apellido + '
+'
+  if(email)    msg += '📧 *Email:* ' + email + '
+'
+  msg += '📱 *Teléfono:* ' + tel + '
+'
+  if(empresa)  msg += '🏢 *Empresa:* ' + empresa + '
+'
+  if(evento)   msg += '🎉 *Tipo de evento:* ' + evento + '
+'
+  if(fecha)    msg += '📅 *Fecha:* ' + fecha + '
+'
+  if(horario)  msg += '🕐 *Horario:* ' + horario + '
+'
+  if(cantidad) msg += '👥 *Personas:* ' + cantidad + '
+'
+  if(lugar)    msg += '📍 *Lugar:* ' + lugar + '
+'
+  if(mensaje)  msg += '
+💬 *Mensaje:* ' + mensaje + '
+'
 
-  const url = 'https://wa.me/5493816174410?text=' + encodeURIComponent(msg)
+  var url = 'https://wa.me/543816174410?text=' + encodeURIComponent(msg)
   window.open(url, '_blank')
 }
 </script>
