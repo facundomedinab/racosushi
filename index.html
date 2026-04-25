@@ -397,7 +397,7 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
       <div class="eventos-form-wrap" style="margin-top:1rem">
         <div class="eventos-form-title">Formulario de Consulta</div>
         <p class="eventos-wa-link" style="margin-bottom:1.5rem">Para consultas sobre Eventos y Catering, completar el formulario y envianos la consulta. Te contactaremos a la brevedad.</p>
-        <form class="ev-form" onsubmit="enviarConsultaEvento(event)">
+        <form class="ev-form">
           <div class="ev-row">
             <div class="ev-field"><label>Nombre</label><input type="text" id="ev-nombre" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box" required></div>
             <div class="ev-field"><label>Apellido</label><input type="text" id="ev-apellido" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box" required></div>
@@ -428,7 +428,7 @@ footer{padding:2.5rem;border-top:.5px solid var(--border);display:flex;justify-c
             <div class="ev-field"><label>Lugar</label><input type="text" id="ev-lugar" style="background:#111111;border:.5px solid #333;border-radius:2px;padding:.55rem .8rem;color:#efefef;font-size:.88rem;outline:none;width:100%;box-sizing:border-box"></div>
           </div>
           <div class="ev-field"><label>Mensaje</label><textarea id="ev-mensaje" style="background:#111;border:.5px solid #333;border-radius:2px;padding:.6rem .85rem;color:#efefef;font-family:inherit;font-size:.88rem;outline:none;width:100%;box-sizing:border-box;resize:vertical;min-height:80px" ></textarea></div>
-          <button type="submit" class="ev-submit" style="background:#c9a96e;color:#080808;border:none;padding:.75rem 2rem;font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:500;cursor:pointer;border-radius:2px;margin-top:.75rem;transition:background .2s" onmouseover="this.style.background='#d4b87a'" onmouseout="this.style.background='#c9a96e'">Enviar consulta vía WhatsApp →</button>
+          <button type="button" class="ev-submit" style="background:#c9a96e;color:#080808;border:none;padding:.75rem 2rem;font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:500;cursor:pointer;border-radius:2px;margin-top:.75rem;transition:background .2s" onmouseover="this.style.background='#d4b87a'" onmouseout="this.style.background='#c9a96e'" onclick="enviarConsultaEvento()">Enviar consulta vía WhatsApp →</button>
         </form>
       </div>
     </div>
@@ -589,35 +589,28 @@ document.addEventListener('DOMContentLoaded', function(){
 
 </script>
 
+
+
 <script>
-function enviarConsultaEvento(e){
-  e.preventDefault();
-  var g = function(id){ var el = document.getElementById(id); return el ? el.value.trim() : ''; };
-  var nombre   = g('ev-nombre');
-  var apellido = g('ev-apellido');
-  var email    = g('ev-email');
-  var tel      = g('ev-tel');
-  var empresa  = g('ev-empresa');
-  var evento   = g('ev-evento');
-  var fecha    = g('ev-fecha');
-  var horario  = g('ev-horario');
-  var cantidad = g('ev-cantidad');
-  var lugar    = g('ev-lugar');
-  var mensaje  = g('ev-mensaje');
-  var NL = '%0A';
-  var msg = encodeURIComponent('🍣 CONSULTA EVENTO - RACO SUSHI') + NL + NL;
-  msg += encodeURIComponent('👤 Nombre: ' + nombre + ' ' + apellido) + NL;
-  if(email)    msg += encodeURIComponent('📧 Email: ' + email) + NL;
-  msg += encodeURIComponent('📱 Teléfono: ' + tel) + NL;
-  if(empresa)  msg += encodeURIComponent('🏢 Empresa: ' + empresa) + NL;
-  if(evento)   msg += encodeURIComponent('🎉 Tipo de evento: ' + evento) + NL;
-  if(fecha)    msg += encodeURIComponent('📅 Fecha: ' + fecha) + NL;
-  if(horario)  msg += encodeURIComponent('🕐 Horario: ' + horario) + NL;
-  if(cantidad) msg += encodeURIComponent('👥 Personas: ' + cantidad) + NL;
-  if(lugar)    msg += encodeURIComponent('📍 Lugar: ' + lugar) + NL;
-  if(mensaje)  msg += NL + encodeURIComponent('💬 Mensaje: ' + mensaje) + NL;
-  var url = 'https://wa.me/543816174410?text=' + msg;
-  window.open(url, '_blank');
+function enviarConsultaEvento(){
+  var g=function(id){var el=document.getElementById(id);return el?el.value.trim():'';};
+  var nombre=g('ev-nombre'), apellido=g('ev-apellido'), email=g('ev-email'), tel=g('ev-tel');
+  var empresa=g('ev-empresa'), evento=g('ev-evento'), fecha=g('ev-fecha'), horario=g('ev-horario');
+  var cantidad=g('ev-cantidad'), lugar=g('ev-lugar'), mensaje=g('ev-mensaje');
+  if(!nombre||!tel){alert('Por favor ingresá al menos nombre y teléfono.');return;}
+  var nl='%0A', msg='';
+  msg+='%F0%9F%8D%A3 CONSULTA EVENTO - RACO SUSHI'+nl+nl;
+  msg+=encodeURIComponent('Nombre: '+nombre+' '+apellido)+nl;
+  if(email) msg+=encodeURIComponent('Email: '+email)+nl;
+  msg+=encodeURIComponent('Telefono: '+tel)+nl;
+  if(empresa) msg+=encodeURIComponent('Empresa: '+empresa)+nl;
+  if(evento) msg+=encodeURIComponent('Tipo de evento: '+evento)+nl;
+  if(fecha) msg+=encodeURIComponent('Fecha: '+fecha)+nl;
+  if(horario) msg+=encodeURIComponent('Horario: '+horario)+nl;
+  if(cantidad) msg+=encodeURIComponent('Personas: '+cantidad)+nl;
+  if(lugar) msg+=encodeURIComponent('Lugar: '+lugar)+nl;
+  if(mensaje) msg+=nl+encodeURIComponent('Mensaje: '+mensaje)+nl;
+  window.open('https://wa.me/543816174410?text='+msg,'_blank');
 }
 </script>
 </body>
