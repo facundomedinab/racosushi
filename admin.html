@@ -1569,8 +1569,12 @@ const INSUMOS_BASE = {
   const custom = JSON.parse(localStorage.getItem('raco_ins_custom')||'{}')
   Object.entries(custom).forEach(([key,ins])=>{
     if(!INSUMOS_BASE[key]) INSUMOS_BASE[key] = {...ins}
-    else if(ins.cat) INSUMOS_BASE[key].cat = ins.cat  // restore categoria
+    if(ins.cat) INSUMOS_BASE[key].cat = ins.cat
+    if(ins.unit) INSUMOS_BASE[key].unit = ins.unit
   })
+  // Restore category overrides for standard ingredients saved from CSV
+  const catOverrides = JSON.parse(localStorage.getItem('raco_ins_cats')||'{}')
+  Object.entries(catOverrides).forEach(([k,cat])=>{ if(INSUMOS_BASE[k]) INSUMOS_BASE[k].cat = cat })
 })()
 
 // Load custom recipes saved from CSV imports
@@ -2042,26 +2046,33 @@ function renderInsumos(){
     <span class="ins-unit">$/g</span>
   </div>`
 
-  // Standard groups
-  INSUMOS_GRUPOS.forEach(grupo => {
-    html += `<div class="ins-section"><div class="ins-section-title">${grupo.titulo}</div>`
-    grupo.keys.forEach(k => {
-      if(!INSUMOS_BASE[k]) return
-      html += row(k, INSUMOS_BASE[k], getP(k))
-    })
-    html += `</div>`
+  const hidden = new Set(JSON.parse(localStorage.getItem('raco_ins_hidden')||'[]'))
+
+  // Group all visible ingredients by their cat value
+  const allStdKeys = INSUMOS_GRUPOS.flatMap(g=>g.keys)
+  const grouped = {} // cat -> [{k, ins}]
+
+  Object.keys(INSUMOS_BASE).forEach(k => {
+    if(hidden.has(k)) return
+    const ins = INSUMOS_BASE[k]
+    const cat = ins.cat || (allStdKeys.includes(k)
+      ? (INSUMOS_GRUPOS.find(g=>g.keys.includes(k))?.titulo || 'Otros')
+      : 'Personalizados')
+    if(!grouped[cat]) grouped[cat] = []
+    grouped[cat].push({k, ins})
   })
 
-  // Custom ingredients (from CSV import) not in any standard group
-  const allStdKeys = INSUMOS_GRUPOS.flatMap(g=>g.keys)
-  const customKeys = Object.keys(INSUMOS_BASE).filter(k => !allStdKeys.includes(k))
-  if(customKeys.length){
-    html += `<div class="ins-section"><div class="ins-section-title">✦ Personalizados</div>`
-    customKeys.forEach(k => {
-      html += row(k, INSUMOS_BASE[k], getP(k))
-    })
+  // Render in order: standard group titles first, then any extra cats
+  const stdCats = INSUMOS_GRUPOS.map(g=>g.titulo)
+  const allCats = [...new Set([...stdCats, ...Object.keys(grouped)])].filter(c=>grouped[c]?.length)
+
+  allCats.forEach(cat => {
+    const items = grouped[cat]
+    if(!items?.length) return
+    html += `<div class="ins-section"><div class="ins-section-title">${cat}</div>`
+    items.forEach(({k, ins}) => html += row(k, ins, getP(k)))
     html += `</div>`
-  }
+  })
 
   el.innerHTML = html
 }
@@ -2084,7 +2095,7 @@ function exportarInsumosCSV(){
       const ins = INSUMOS_BASE[k]
       const precio = (Math.round(getP(k)*10)/10).toFixed(1)
       const nombre = ins.n.replace(/;/g,'')
-      const cat = ins.cat || grupo.titulo.replace(/[^a-záéíóúñA-ZÁÉÍÓÚÑ0-9 ]/g,'').trim()
+      const cat = ins.cat || grupo.titulo.replace(/[^a-záéíóúñA-ZÁÉÍÓÚÑ0-9 ]/g,'').replace(/  +/g,' ').trim()
       csv += `${nombre};${ins.unit};${precio};${cat}\n`
     })
   })
@@ -2120,6 +2131,10 @@ function importarInsumosCSV(input){
       if(k.startsWith('raco_ins_')) localStorage.removeItem(k)
     })
     localStorage.removeItem('raco_ins_custom')
+    localStorage.removeItem('raco_ins_cats')
+    localStorage.removeItem('raco_ins_hidden')
+    // Reset all cat overrides in memory
+    Object.keys(INSUMOS_BASE).forEach(k => delete INSUMOS_BASE[k].cat)
     const newCustom = {}
 
     lines.slice(1).forEach(line => {
@@ -2142,6 +2157,10 @@ function importarInsumosCSV(input){
         localStorage.setItem('raco_ins_'+key, precio)
         INSUMOS_BASE[key].cat = cat
         INSUMOS_BASE[key].unit = unidad
+        // Persist cat override for standard ingredients
+        const cats = JSON.parse(localStorage.getItem('raco_ins_cats')||'{}')
+        cats[key] = cat
+        localStorage.setItem('raco_ins_cats', JSON.stringify(cats))
       } else {
         // New ingredient — generate key
         key = nombre.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')
@@ -2152,15 +2171,26 @@ function importarInsumosCSV(input){
       count++
     })
 
-    // Remove custom ingredients that are no longer in CSV
-    const csvNames = lines.slice(1).map(l=>l.split(SEP)[0]?.trim().toLowerCase()).filter(Boolean)
+    // Build set of names present in CSV (normalized)
+    const csvNames = new Set(lines.slice(1).map(l=>l.split(SEP)[0]?.trim().toLowerCase().replace(/[,;]/g,'')).filter(Boolean))
+
+    // Find keys to hide (in INSUMOS_BASE but not in CSV)
+    const hidden = Object.keys(INSUMOS_BASE).filter(k => {
+      const name = INSUMOS_BASE[k].n.replace(/[,;]/g,'').toLowerCase()
+      return !csvNames.has(name)
+    })
+    localStorage.setItem('raco_ins_hidden', JSON.stringify(hidden))
+
+    // Remove custom ingredients not in CSV
+    Object.keys(newCustom).length
+      ? localStorage.setItem('raco_ins_custom', JSON.stringify(newCustom))
+      : localStorage.removeItem('raco_ins_custom')
+    // Also remove old custom that aren't in CSV anymore
     const prevCustom = JSON.parse(localStorage.getItem('raco_ins_custom')||'{}')
     Object.keys(prevCustom).forEach(k => {
-      const stillPresent = csvNames.includes(INSUMOS_BASE[k]?.n?.toLowerCase())
-      if(!stillPresent) delete INSUMOS_BASE[k]
+      const name = INSUMOS_BASE[k]?.n?.replace(/[,;]/g,'').toLowerCase()||''
+      if(!csvNames.has(name)) delete INSUMOS_BASE[k]
     })
-
-    if(Object.keys(newCustom).length) localStorage.setItem('raco_ins_custom', JSON.stringify(newCustom))
 
     renderInsumos()
     if(document.getElementById('tab-costos').classList.contains('on')) renderCostos()
@@ -2379,21 +2409,22 @@ function copiarListaCompras(){
 // Format: tipo,nombre,precio_venta,ingrediente_key,gramos,ingrediente_key2,gramos2,...
 function exportarRecetasCSV(){
   const SEP = ';'
-  const maxIng = Math.max(...[...RECETAS_ROLLS,...RECETAS_NIGIRIS].map(r=>r.ingredientes.length))
+  const allRecs = [...RECETAS_ROLLS,...RECETAS_NIGIRIS,...RECETAS_SALSAS.map(s=>({...s,ingredientes:s.ingredientes.map(i=>({k:i.k||i[0],g:i.g||i[1]||0,desc:INSUMOS_BASE[i.k||i[0]]?.n||i.k||i[0]}))}))]
+  const maxIng = Math.max(...allRecs.map(r=>r.ingredientes.length))
   let hdr = ['tipo','nombre','precio_venta']
   for(let i=1;i<=maxIng;i++) hdr.push(`ingrediente${i}`,`gramos${i}`)
   let csv = hdr.join(SEP) + '\n'
 
   const exportRec = (rec, tipo) => {
-    const pv = getRec(tipo, rec.n, 'pv', rec.pv)
+    const pv = tipo==='salsa' ? rec.batch : getRec(tipo, rec.n, 'pv', rec.pv)
     const cols = [tipo, rec.n, pv]
-    rec.ingredientes.forEach(ing => cols.push(ing.k, ing.g))
-    // Pad to same length
+    rec.ingredientes.forEach(ing => cols.push(ing.k||ing[0], ing.g||ing[1]||0))
     while(cols.length < hdr.length) cols.push('')
     csv += cols.join(SEP) + '\n'
   }
   RECETAS_ROLLS.forEach(r=>exportRec(r,'roll'))
   RECETAS_NIGIRIS.forEach(r=>exportRec(r,'nigiri'))
+  RECETAS_SALSAS.forEach(r=>exportRec(r,'salsa'))
 
   const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'})
   const url = URL.createObjectURL(blob)
