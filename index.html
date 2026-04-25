@@ -591,47 +591,33 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <script>
 function enviarConsultaEvento(e){
-  e.preventDefault()
-  var g = function(id){ var el = document.getElementById(id); return el ? el.value.trim() : '' }
-  var nombre   = g('ev-nombre')
-  var apellido = g('ev-apellido')
-  var email    = g('ev-email')
-  var tel      = g('ev-tel')
-  var empresa  = g('ev-empresa')
-  var evento   = g('ev-evento')
-  var fecha    = g('ev-fecha')
-  var horario  = g('ev-horario')
-  var cantidad = g('ev-cantidad')
-  var lugar    = g('ev-lugar')
-  var mensaje  = g('ev-mensaje')
-
-  var msg = '🍣 *CONSULTA EVENTO - RACO SUSHI*
-
-'
-  msg += '👤 *Nombre:* ' + nombre + ' ' + apellido + '
-'
-  if(email)    msg += '📧 *Email:* ' + email + '
-'
-  msg += '📱 *Teléfono:* ' + tel + '
-'
-  if(empresa)  msg += '🏢 *Empresa:* ' + empresa + '
-'
-  if(evento)   msg += '🎉 *Tipo de evento:* ' + evento + '
-'
-  if(fecha)    msg += '📅 *Fecha:* ' + fecha + '
-'
-  if(horario)  msg += '🕐 *Horario:* ' + horario + '
-'
-  if(cantidad) msg += '👥 *Personas:* ' + cantidad + '
-'
-  if(lugar)    msg += '📍 *Lugar:* ' + lugar + '
-'
-  if(mensaje)  msg += '
-💬 *Mensaje:* ' + mensaje + '
-'
-
-  var url = 'https://wa.me/543816174410?text=' + encodeURIComponent(msg)
-  window.open(url, '_blank')
+  e.preventDefault();
+  var g = function(id){ var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  var nombre   = g('ev-nombre');
+  var apellido = g('ev-apellido');
+  var email    = g('ev-email');
+  var tel      = g('ev-tel');
+  var empresa  = g('ev-empresa');
+  var evento   = g('ev-evento');
+  var fecha    = g('ev-fecha');
+  var horario  = g('ev-horario');
+  var cantidad = g('ev-cantidad');
+  var lugar    = g('ev-lugar');
+  var mensaje  = g('ev-mensaje');
+  var NL = '%0A';
+  var msg = encodeURIComponent('🍣 CONSULTA EVENTO - RACO SUSHI') + NL + NL;
+  msg += encodeURIComponent('👤 Nombre: ' + nombre + ' ' + apellido) + NL;
+  if(email)    msg += encodeURIComponent('📧 Email: ' + email) + NL;
+  msg += encodeURIComponent('📱 Teléfono: ' + tel) + NL;
+  if(empresa)  msg += encodeURIComponent('🏢 Empresa: ' + empresa) + NL;
+  if(evento)   msg += encodeURIComponent('🎉 Tipo de evento: ' + evento) + NL;
+  if(fecha)    msg += encodeURIComponent('📅 Fecha: ' + fecha) + NL;
+  if(horario)  msg += encodeURIComponent('🕐 Horario: ' + horario) + NL;
+  if(cantidad) msg += encodeURIComponent('👥 Personas: ' + cantidad) + NL;
+  if(lugar)    msg += encodeURIComponent('📍 Lugar: ' + lugar) + NL;
+  if(mensaje)  msg += NL + encodeURIComponent('💬 Mensaje: ' + mensaje) + NL;
+  var url = 'https://wa.me/543816174410?text=' + msg;
+  window.open(url, '_blank');
 }
 </script>
 </body>
