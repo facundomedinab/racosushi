@@ -580,23 +580,6 @@ const EXTRAS=[
   {n:'Extra Jengibre',   p:'Extra', v:700},
   {n:'Salsa Teriyaki',   p:'Extra', v:700},
 ]
-// Sync ROLLS/NIGIRIS for orders from saved recetas if available
-;(()=>{
-  const saved = localStorage.getItem('raco_recetas_custom')
-  if(!saved) return
-  try {
-    const {rolls, nigiris} = JSON.parse(saved)
-    if(rolls?.length){
-      ROLLS.length=0
-      rolls.forEach(r=>ROLLS.push({n:r.n, d:r.n, p:'', v:r.pv}))
-    }
-    if(nigiris?.length){
-      NIGIRIS.length=0
-      nigiris.forEach(r=>NIGIRIS.push({n:r.n, p:'', v:r.pv}))
-    }
-  } catch(e){}
-})()
-
 const TAG={'Salmon':'t-sal','Trucha':'t-tru','Langostino':'t-lan','Pesca blanca':'t-pes','Ikura':'t-iku','Extra':'b-piezas'}
 const rq=new Array(ROLLS.length).fill(0)
 const nq=new Array(NIGIRIS.length).fill(0)
@@ -1591,16 +1574,6 @@ const INSUMOS_BASE = {
 })()
 
 // Load custom recipes saved from CSV imports
-;(()=>{
-  const saved = localStorage.getItem('raco_recetas_custom')
-  if(!saved) return
-  try {
-    const {rolls, nigiris} = JSON.parse(saved)
-    if(rolls?.length){ RECETAS_ROLLS.length=0; rolls.forEach(r=>RECETAS_ROLLS.push(r)) }
-    if(nigiris?.length){ RECETAS_NIGIRIS.length=0; nigiris.forEach(r=>RECETAS_NIGIRIS.push(r)) }
-  } catch(e){}
-})()
-
 function getP(key){ 
   const s = localStorage.getItem('raco_ins_'+key)
   return s !== null ? parseFloat(s) : (INSUMOS_BASE[key]?.pg || 0)
@@ -1629,7 +1602,7 @@ function salsaCostoG(salsa){
 }
 
 // ── RECETAS (gramos por ingrediente) ─────────────────────────
-const RECETAS_ROLLS = [
+let RECETAS_ROLLS = [
   {n:'NY Phila',        pv:10000, ingredientes:[
     {k:'shari',    g:120, desc:'Shari (cocido)'},
     {k:'nori',     g:1,   desc:'Nori',          hoja:true},
@@ -1726,7 +1699,7 @@ const RECETAS_ROLLS = [
   ]},
 ]
 
-const RECETAS_NIGIRIS = [
+let RECETAS_NIGIRIS = [
   {n:'Trucha Chalaquita',     pv:2500, ingredientes:[
     {k:'shari_n',  g:15,  desc:'Shari (cocido)'},
     {k:'trucha',   g:20,  desc:'Trucha filet'},
@@ -1842,6 +1815,26 @@ function filtrarCostos(f, btn){
   btn.classList.add('on')
   renderCostos()
 }
+
+// ── Load saved custom recetas from localStorage ──────────────
+;(()=>{
+  const saved = localStorage.getItem('raco_recetas_custom')
+  if(!saved) return
+  try {
+    const {rolls, nigiris} = JSON.parse(saved)
+    if(rolls?.length)  RECETAS_ROLLS  = rolls.map(r=>({...r}))
+    if(nigiris?.length) RECETAS_NIGIRIS = nigiris.map(r=>({...r}))
+    // Also sync ROLLS/NIGIRIS for orders panel
+    if(rolls?.length){
+      ROLLS.length=0
+      rolls.forEach(r=>ROLLS.push({n:r.n, d:r.n, p:'', v:r.pv}))
+    }
+    if(nigiris?.length){
+      NIGIRIS.length=0
+      nigiris.forEach(r=>NIGIRIS.push({n:r.n, p:'', v:r.pv}))
+    }
+  } catch(e){ console.warn('Error cargando recetas:', e) }
+})()
 
 // Storage keys for recipe overrides
 function getRecKey(tipo, nombre, field){ return 'raco_rec_'+tipo+'_'+nombre.replace(/\s/g,'_')+'_'+field }
