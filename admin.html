@@ -600,6 +600,23 @@ const EXTRAS=[
   {n:'Extra Jengibre',   p:'Extra', v:700},
   {n:'Salsa Teriyaki',   p:'Extra', v:700},
 ]
+// Sync ROLLS/NIGIRIS for orders from saved recetas if available
+;(()=>{
+  const saved = localStorage.getItem('raco_recetas_custom')
+  if(!saved) return
+  try {
+    const {rolls, nigiris} = JSON.parse(saved)
+    if(rolls?.length){
+      ROLLS.length=0
+      rolls.forEach(r=>ROLLS.push({n:r.n, d:r.n, p:'', v:r.pv}))
+    }
+    if(nigiris?.length){
+      NIGIRIS.length=0
+      nigiris.forEach(r=>NIGIRIS.push({n:r.n, p:'', v:r.pv}))
+    }
+  } catch(e){}
+})()
+
 const TAG={'Salmon':'t-sal','Trucha':'t-tru','Langostino':'t-lan','Pesca blanca':'t-pes','Ikura':'t-iku','Extra':'b-piezas'}
 const rq=new Array(ROLLS.length).fill(0)
 const nq=new Array(NIGIRIS.length).fill(0)
@@ -1585,9 +1602,28 @@ const INSUMOS_BASE = {
 }
 
 // Get precio/g considering localStorage overrides
+// Load custom ingredients saved from CSV imports
+;(()=>{
+  const custom = JSON.parse(localStorage.getItem('raco_ins_custom')||'{}')
+  Object.entries(custom).forEach(([key,ins])=>{
+    if(!INSUMOS_BASE[key]) INSUMOS_BASE[key] = {...ins}
+  })
+})()
+
+// Load custom recipes saved from CSV imports
+;(()=>{
+  const saved = localStorage.getItem('raco_recetas_custom')
+  if(!saved) return
+  try {
+    const {rolls, nigiris} = JSON.parse(saved)
+    if(rolls?.length){ RECETAS_ROLLS.length=0; rolls.forEach(r=>RECETAS_ROLLS.push(r)) }
+    if(nigiris?.length){ RECETAS_NIGIRIS.length=0; nigiris.forEach(r=>RECETAS_NIGIRIS.push(r)) }
+  } catch(e){}
+})()
+
 function getP(key){ 
   const s = localStorage.getItem('raco_ins_'+key)
-  return s !== null ? parseFloat(s) : INSUMOS_BASE[key].pg 
+  return s !== null ? parseFloat(s) : (INSUMOS_BASE[key]?.pg || 0)
 }
 
 // SHARI cost per roll (120g cocido)
@@ -2075,24 +2111,45 @@ function importarInsumosCSV(input){
   if(!file) return
   const reader = new FileReader()
   reader.onload = e => {
-    const lines = e.target.result.split('\n').slice(1) // skip header
-    let updated = 0, skipped = 0
-    lines.forEach(line => {
-      const parts = line.split(',')
+    const text = e.target.result.replace(/^\uFEFF/,'')
+    const lines = text.split('\n').filter(l=>l.trim())
+    const SEP = lines[0].includes(';') ? ';' : ','
+    let updated = 0, added = 0, skipped = 0
+    lines.slice(1).forEach(line => {
+      const parts = line.split(SEP)
       if(parts.length < 3) return
       const nombre = parts[0].trim()
-      const precio = parseFloat(parts[2])
-      if(isNaN(precio)||precio<=0){ skipped++; return }
-      // Match by name
-      const key = Object.keys(INSUMOS_BASE).find(k => 
+      const unidad = parts[1]?.trim() || 'kg'
+      // Fix comma decimals: "0,5" -> "0.5"
+      const precioStr = parts[2].trim().replace(',','.')
+      const precio = parseFloat(precioStr)
+      if(!nombre || isNaN(precio) || precio <= 0){ skipped++; return }
+
+      // Try to match existing key by name
+      let key = Object.keys(INSUMOS_BASE).find(k =>
         INSUMOS_BASE[k].n.replace(/,/g,'').toLowerCase() === nombre.toLowerCase()
       )
-      if(key){ localStorage.setItem('raco_ins_'+key, precio); updated++ }
-      else skipped++
+
+      if(key){
+        localStorage.setItem('raco_ins_'+key, precio)
+        updated++
+      } else {
+        // New ingredient — create key from name, save to INSUMOS_BASE and localStorage
+        key = nombre.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')
+        if(!INSUMOS_BASE[key]){
+          INSUMOS_BASE[key] = {n:nombre, pg:precio, prov:'', unit:unidad}
+          // Persist new ingredient definition
+          const custom = JSON.parse(localStorage.getItem('raco_ins_custom')||'{}')
+          custom[key] = {n:nombre, pg:precio, unit:unidad}
+          localStorage.setItem('raco_ins_custom', JSON.stringify(custom))
+          added++
+        }
+        localStorage.setItem('raco_ins_'+key, precio)
+      }
     })
     renderInsumos()
     if(document.getElementById('tab-costos').classList.contains('on')) renderCostos()
-    showToast(`CSV importado: ${updated} actualizados, ${skipped} no encontrados`)
+    showToast(`Insumos: ${updated} actualizados${added?' · '+added+' nuevos':''}${skipped?' · '+skipped+' saltados':''}`)
     input.value = ''
   }
   reader.readAsText(file)
@@ -2363,6 +2420,12 @@ function importarRecetasCSV(input){
       newNigiris.forEach(r => RECETAS_NIGIRIS.push(r))
       updated += newNigiris.length
     }
+
+    // Persist to localStorage so they survive reload
+    localStorage.setItem('raco_recetas_custom', JSON.stringify({
+      rolls: RECETAS_ROLLS.map(r=>({n:r.n, pv:r.pv, ingredientes:r.ingredientes})),
+      nigiris: RECETAS_NIGIRIS.map(r=>({n:r.n, pv:r.pv, ingredientes:r.ingredientes}))
+    }))
 
     syncPreciosMenu()
     // Rebuild compras simulator inputs

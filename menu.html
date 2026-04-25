@@ -385,9 +385,33 @@ const NIGIRIS_BASE=[
   {n:'Ikura',                wa:'Ikura',                p:'Ikura',       v:2500,spicy:0,desc:'Shari, banda de nori, imitación de huevas de salmón'},
 ]
 
-// Apply saved prices from admin
-const ROLLS = ROLLS_BASE.map(r=>({...r, v:getPV('roll', r.n, r.v)}))
-const NIGIRIS = NIGIRIS_BASE.map(n=>({...n, v:getPV('nigiri', n.n, n.v)}))
+// Apply saved prices and custom recipes from admin
+let ROLLS, NIGIRIS
+;(()=>{
+  const saved = localStorage.getItem('raco_recetas_custom')
+  if(saved){
+    try {
+      const {rolls, nigiris} = JSON.parse(saved)
+      if(rolls?.length){
+        ROLLS = rolls.map(r=>({n:r.n, wa:r.n, p:'', v:r.pv, spicy:0, desc:''}))
+        // Try to merge desc/spicy from base
+        ROLLS = ROLLS.map(r=>{
+          const base = ROLLS_BASE.find(b=>b.n===r.n||b.wa===r.n)
+          return base ? {...r, desc:base.desc, spicy:base.spicy, p:base.p} : r
+        })
+      }
+      if(nigiris?.length){
+        NIGIRIS = nigiris.map(r=>({n:r.n, wa:r.n, p:'', v:r.pv, spicy:0, desc:''}))
+        NIGIRIS = NIGIRIS.map(r=>{
+          const base = NIGIRIS_BASE.find(b=>b.n===r.n||b.wa===r.n)
+          return base ? {...r, desc:base.desc, spicy:base.spicy, p:base.p} : r
+        })
+      }
+    } catch(e){}
+  }
+  if(!ROLLS)  ROLLS  = ROLLS_BASE.map(r=>({...r, v:getPV('roll', r.n, r.v)}))
+  if(!NIGIRIS) NIGIRIS = NIGIRIS_BASE.map(n=>({...n, v:getPV('nigiri', n.n, n.v)}))
+})()
 const EXTRAS=[
   {n:'Extra Salsa Soja',  wa:'Extra Salsa Soja',  v:700, desc:'50ml de salsa soja extra'},
   {n:'Extra Jengibre',    wa:'Extra Jengibre',    v:700, desc:'Jengibre encurtido extra'},
