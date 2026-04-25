@@ -451,11 +451,24 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   <!-- COSTOS -->
   <div id="tab-costos" class="panel">
     <div id="costos-wrap">
-      <div class="costos-filtros">
-        <button class="cfiltro on" onclick="filtrarCostos('todos',this)">Todos</button>
-        <button class="cfiltro" onclick="filtrarCostos('rolls',this)">Rolls</button>
-        <button class="cfiltro" onclick="filtrarCostos('nigiris',this)">Nigiris</button>
-        <button class="cfiltro" onclick="filtrarCostos('salsas',this)">Salsas</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
+        <div class="costos-filtros" style="margin-bottom:0">
+          <button class="cfiltro on" onclick="filtrarCostos('todos',this)">Todos</button>
+          <button class="cfiltro" onclick="filtrarCostos('rolls',this)">Rolls</button>
+          <button class="cfiltro" onclick="filtrarCostos('nigiris',this)">Nigiris</button>
+          <button class="cfiltro" onclick="filtrarCostos('salsas',this)">Salsas</button>
+        </div>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;align-items:center;gap:.35rem;background:var(--surface);border:.5px solid var(--border);border-radius:5px;padding:.25rem .55rem">
+            <span style="font-family:var(--mono);font-size:.6rem;color:var(--muted)">Margen objetivo</span>
+            <input id="margen-objetivo" type="number" min="1" max="99" value="60" style="width:40px;background:transparent;border:none;color:var(--accent);font-family:var(--mono);font-size:.78rem;outline:none;text-align:center" onchange="renderCostos()">
+            <span style="font-family:var(--mono);font-size:.6rem;color:var(--muted)">%</span>
+          </div>
+          <label class="btn ghost" style="padding:.3rem .65rem;font-size:.6rem;cursor:pointer" title="CSV con columnas: tipo,nombre,precio_venta,ingrediente1,g1,ingrediente2,g2...">
+            ↑ Importar recetas<input type="file" accept=".csv" style="display:none" onchange="importarRecetasCSV(this)">
+          </label>
+          <button class="btn ghost" style="padding:.3rem .65rem;font-size:.6rem" onclick="exportarRecetasCSV()">↓ Exportar recetas</button>
+        </div>
       </div>
       <div id="costos-lista"></div>
     </div>
@@ -1921,10 +1934,13 @@ function renderCostos(){
       </div>`
     })
 
+    const pvSug = precioSugerido(costo)
+    const pvSugDiff = pvSug !== pvSaved
     html += `<div class="costo-total-row">
         <div style="display:flex;flex-direction:column;gap:.1rem">
           <span class="costo-total-lbl">Costo total</span>
           <span class="card-margen" style="font-family:var(--mono);font-size:.75rem;color:${margenColor}">${margen}% margen</span>
+          ${pvSugDiff ? '<span style=\"font-family:var(--mono);font-size:.65rem;color:var(--accent2)\">💡 Precio sugerido: '+money(pvSug)+'</span>' : ''}
         </div>
         <div style="text-align:right">
           <span class="card-costo-total costo-total-val">${money(costo)}</span>
@@ -2013,9 +2029,9 @@ function renderInsumos(){
       html += `<div class="ins-row">
         <div>
           <div class="ins-nombre">${ins.n}</div>
-          <div class="ins-proveedor">${ins.prov} · ${ins.unit}</div>
+          <div class="ins-proveedor">${ins.unit}</div>
         </div>
-        <input class="ins-inp" type="number" step="0.01" value="${val.toFixed(2)}"
+        <input class="ins-inp" type="number" step="0.1" value="${Math.round(val*10)/10}"
           onchange="updateInsumo('${k}',this.value)"
           title="Precio por g/ml">
         <span class="ins-unit">$/g</span>
@@ -2031,19 +2047,18 @@ function updateInsumo(key, val){
   if(isNaN(v)||v<0) return
   localStorage.setItem('raco_ins_'+key, v)
   showToast('Precio actualizado ✓')
-  // Recalculate costos if open
   if(document.getElementById('tab-costos').classList.contains('on')) renderCostos()
 }
 
 
 function exportarInsumosCSV(){
-  let csv = 'Ingrediente,Proveedor,Unidad,Precio por g ($)\n'
+  let csv = 'Ingrediente,Unidad,Precio por g ($)\n'
   INSUMOS_GRUPOS.forEach(grupo => {
     grupo.keys.forEach(k => {
       const ins = INSUMOS_BASE[k]
-      const precio = getP(k).toFixed(4)
+      const precio = (Math.round(getP(k)*10)/10).toFixed(1)
       const nombre = ins.n.replace(/,/g,'')
-      csv += `${nombre},${ins.prov},${ins.unit},${precio}\n`
+      csv += `${nombre},${ins.unit},${precio}\n`
     })
   })
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'})
@@ -2064,9 +2079,9 @@ function importarInsumosCSV(input){
     let updated = 0, skipped = 0
     lines.forEach(line => {
       const parts = line.split(',')
-      if(parts.length < 4) return
+      if(parts.length < 3) return
       const nombre = parts[0].trim()
-      const precio = parseFloat(parts[3])
+      const precio = parseFloat(parts[2])
       if(isNaN(precio)||precio<=0){ skipped++; return }
       // Match by name
       const key = Object.keys(INSUMOS_BASE).find(k => 
@@ -2142,11 +2157,28 @@ function resetSimCompras(){
   calcCompras()
 }
 
+
+// ── RUBROS para orden de compra ─────────────────────────────
+const RUBROS = {
+  pescaderia: { label:'🐟 Pescadería', keys:['salmon','trucha','langostino','pescablanca'] },
+  verduleria:  { label:'🥑 Verdulería', keys:['palta','lima','maracuya','cebollino','negi','quinoa','krein_ing','cebolla','cilantro'] },
+  lacteos:     { label:'🧀 Lácteos',    keys:['qcrema','qfresco'] },
+  almacen:     { label:'🏪 Almacén',    keys:['arroz','vinagre','azucar','mirin','sal','soja','hondashi','miel','maicena','ajo','azucar_r','pimienta','oliva','galleta','mani','almendras','nueces','ponzu'] },
+  especias:    { label:'🫙 Especias / Salsas base', keys:['kewpie','sriracha','gochujang','wasabi','sesamo_ac','trufa_ac','aji_pasta','rocoto_pasta'] },
+  crocantes:   { label:'🍘 Crocantes',  keys:['panko','maiz','filo','furikake','tempura','cebfrita','sesamo_n','sesamo_m'] },
+  algas:       { label:'🌿 Algas',      keys:['nori'] },
+  otros:       { label:'📦 Otros',      keys:['boken'] },
+}
+function getRubro(k){
+  for(const [rub,{keys}] of Object.entries(RUBROS)) if(keys.includes(k)) return rub
+  return 'otros'
+}
+
 function calcCompras(){
-  const totales = {} // key -> {n, g, costo}
+  const totales = {} // key -> {n, g, costo, rubro, esNori}
   const add = (k, g) => {
     if(!INSUMOS_BASE[k]) return
-    if(!totales[k]) totales[k] = {n:INSUMOS_BASE[k].n, g:0, costo:0}
+    if(!totales[k]) totales[k] = {n:INSUMOS_BASE[k].n, g:0, costo:0, rubro:getRubro(k), esNori:k==='nori'}
     totales[k].g += g
     totales[k].costo += getP(k)*g
   }
@@ -2156,7 +2188,17 @@ function calcCompras(){
     if(!q) return
     rec.ingredientes.forEach(ing => {
       const k = ing.k, g = ing.g || 0
-      if(k==='shari'||k==='shari_n'||k.startsWith('salsa_')) return
+      if(k==='shari'||k==='shari_n') return
+      if(k.startsWith('salsa_')){
+        // Include salsa ingredients
+        const salsaKey = k.replace('salsa_','')
+        const salsa = RECETAS_SALSAS.find(s=>s.k===salsaKey)
+        if(salsa) salsa.ingredientes.forEach(si => {
+          const sk = si.k||si[0], sg = si.g||si[1]||0
+          add(sk, sg * q * (g / salsa.batch))
+        })
+        return
+      }
       add(k, g * q)
     })
     add('arroz', Math.ceil(120 * q / 1.8))
@@ -2168,7 +2210,16 @@ function calcCompras(){
     if(!q) return
     rec.ingredientes.forEach(ing => {
       const k = ing.k, g = ing.g || 0
-      if(k==='shari'||k==='shari_n'||k.startsWith('salsa_')) return
+      if(k==='shari'||k==='shari_n') return
+      if(k.startsWith('salsa_')){
+        const salsaKey = k.replace('salsa_','')
+        const salsa = RECETAS_SALSAS.find(s=>s.k===salsaKey)
+        if(salsa) salsa.ingredientes.forEach(si => {
+          const sk = si.k||si[0], sg = si.g||si[1]||0
+          add(sk, sg * q * (g / salsa.batch))
+        })
+        return
+      }
       add(k, g * q)
     })
     add('arroz', Math.ceil(15 * q / 1.8))
@@ -2180,26 +2231,37 @@ function calcCompras(){
   const totalNig   = simQ.n.reduce((a,v)=>a+v,0)
   if(!totalRolls && !totalNig){ el.innerHTML=''; return }
 
-  const items = Object.values(totales).filter(it=>it.g>0).sort((a,b)=>a.n.localeCompare(b.n))
-  let totalGeneral = items.reduce((a,it)=>a+it.costo,0)
-
-  let html = `<div style="font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.75rem;text-transform:uppercase">
-    ${totalRolls ? totalRolls+' roll'+(totalRolls>1?'s':'') : ''}${totalRolls&&totalNig?' · ':''}${totalNig ? totalNig+' nigiri'+(totalNig>1?'s':'') : ''}
-  </div>
-  <div class="compra-section">`
-
-  items.forEach(it=>{
-    html += `<div class="compra-row">
-      <span class="compra-ing">${it.n}</span>
-      <div class="compra-detalle">
-        <span class="compra-g">${Math.ceil(it.g)}g</span>
-        <span class="compra-costo">${money(Math.ceil(it.costo))}</span>
-      </div>
-    </div>`
+  // Group by rubro
+  const porRubro = {}
+  Object.entries(totales).forEach(([k,it])=>{
+    if(it.g<=0) return
+    if(!porRubro[it.rubro]) porRubro[it.rubro]=[]
+    porRubro[it.rubro].push({...it, key:k})
   })
 
-  html += `</div>
-  <div style="background:rgba(201,169,110,.08);border:.5px solid var(--accent2);border-radius:7px;padding:.85rem 1rem;margin-top:.5rem;display:flex;justify-content:space-between;align-items:center">
+  let totalGeneral = Object.values(totales).reduce((a,it)=>a+it.costo,0)
+  let html = `<div style="font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.75rem;text-transform:uppercase">
+    ${totalRolls ? totalRolls+' roll'+(totalRolls>1?'s':'') : ''}${totalRolls&&totalNig?' · ':''}${totalNig ? totalNig+' nigiri'+(totalNig>1?'s':'') : ''}
+  </div>`
+
+  Object.entries(RUBROS).forEach(([rub,{label}])=>{
+    const items = (porRubro[rub]||[]).sort((a,b)=>a.n.localeCompare(b.n))
+    if(!items.length) return
+    html += `<div class="compra-section"><div class="compra-proveedor">${label}</div>`
+    items.forEach(it=>{
+      const qty = it.esNori ? Math.ceil(it.g)+' u' : Math.ceil(it.g)+'g'
+      html += `<div class="compra-row">
+        <span class="compra-ing">${it.n}</span>
+        <div class="compra-detalle">
+          <span class="compra-g">${qty}</span>
+          <span class="compra-costo">${money(Math.ceil(it.costo))}</span>
+        </div>
+      </div>`
+    })
+    html += `</div>`
+  })
+
+  html += `<div style="background:rgba(201,169,110,.08);border:.5px solid var(--accent2);border-radius:7px;padding:.85rem 1rem;margin-top:.5rem;display:flex;justify-content:space-between;align-items:center">
     <span style="font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Total estimado</span>
     <span style="font-family:var(--mono);font-size:1.1rem;font-weight:500;color:var(--accent)">${money(Math.ceil(totalGeneral))}</span>
   </div>`
@@ -2211,21 +2273,118 @@ function copiarListaCompras(){
   const totalRolls = simQ.r.reduce((a,v)=>a+v,0)
   const totalNig   = simQ.n.reduce((a,v)=>a+v,0)
   if(!totalRolls && !totalNig){ showToast('Ingresá cantidades primero'); return }
-  let txt = `🛒 LISTA DE COMPRAS · ${today()}\n`
-  txt += `${'─'.repeat(30)}\n`
+  let txt = `🛒 LISTA DE COMPRAS · ${today()}\n${'─'.repeat(30)}\n`
   RECETAS_ROLLS.forEach((r,i)=>{ if(simQ.r[i]) txt += `  ${simQ.r[i]}x ${r.n}\n` })
   RECETAS_NIGIRIS.forEach((n,i)=>{ if(simQ.n[i]) txt += `  ${simQ.n[i]}x ${n.n}\n` })
   txt += `${'─'.repeat(30)}\n`
   document.querySelectorAll('#compras-resultado .compra-section').forEach(sec=>{
     txt += `\n${sec.querySelector('.compra-proveedor')?.textContent?.trim()||''}\n`
     sec.querySelectorAll('.compra-row').forEach(row=>{
-      const ing = row.querySelector('.compra-ing')?.textContent?.trim()||''
-      const g   = row.querySelector('.compra-g')?.textContent?.trim()||''
-      const c   = row.querySelector('.compra-costo')?.textContent?.trim()||''
-      txt += `  ${ing}: ${g} — ${c}\n`
+      txt += `  ${row.querySelector('.compra-ing')?.textContent?.trim()||''}: ${row.querySelector('.compra-g')?.textContent?.trim()||''} — ${row.querySelector('.compra-costo')?.textContent?.trim()||''}\n`
     })
   })
   navigator.clipboard.writeText(txt).then(()=>showToast('Lista copiada ✓')).catch(()=>showToast('No se pudo copiar'))
+}
+
+// ── RECETAS CSV IMPORT/EXPORT ──────────────────────────────
+// Format: tipo,nombre,precio_venta,ingrediente_key,gramos,ingrediente_key2,gramos2,...
+function exportarRecetasCSV(){
+  let csv = 'tipo,nombre,precio_venta'
+  const maxIng = Math.max(...[...RECETAS_ROLLS,...RECETAS_NIGIRIS].map(r=>r.ingredientes.length))
+  for(let i=1;i<=maxIng;i++) csv += `,ingrediente${i},gramos${i}`
+  csv += '\n'
+
+  const exportRec = (rec, tipo) => {
+    const pv = getRec(tipo, rec.n, 'pv', rec.pv)
+    let row = `${tipo},"${rec.n}",${pv}`
+    rec.ingredientes.forEach(ing => { row += `,${ing.k},${ing.g}` })
+    csv += row + '\n'
+  }
+  RECETAS_ROLLS.forEach(r=>exportRec(r,'roll'))
+  RECETAS_NIGIRIS.forEach(r=>exportRec(r,'nigiri'))
+
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'})
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href=url; a.download='recetas_raco_'+today().replace(/\//g,'-')+'.csv'; a.click()
+  URL.revokeObjectURL(url)
+  showToast('Recetas exportadas ✓')
+}
+
+function importarRecetasCSV(input){
+  const file = input.files[0]; if(!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    const lines = e.target.result.split('\n').filter(l=>l.trim())
+    const header = lines[0].split(',')
+    let updated=0, added=0
+
+    lines.slice(1).forEach(line => {
+      // Handle quoted fields
+      const parts = []
+      let cur='', inQ=false
+      for(const ch of line){ if(ch==='"'){inQ=!inQ}else if(ch===','&&!inQ){parts.push(cur);cur=''}else{cur+=ch} }
+      parts.push(cur)
+
+      const tipo   = parts[0]?.trim()
+      const nombre = parts[1]?.trim()
+      const pv     = parseFloat(parts[2])
+      if(!tipo||!nombre||isNaN(pv)) return
+
+      // Parse ingredients
+      const ings = []
+      for(let i=3;i<parts.length-1;i+=2){
+        const k=parts[i]?.trim(), g=parseFloat(parts[i+1])
+        if(k&&!isNaN(g)&&g>0){
+          const desc = INSUMOS_BASE[k]?.n || k
+          ings.push({k, g, desc})
+        }
+      }
+
+      // Save price override
+      localStorage.setItem('raco_rec_'+tipo+'_'+nombre.replace(/[^a-zA-Z0-9]/g,'_')+'_pv', pv)
+
+      // Update or add to the right array
+      const arr = tipo==='roll' ? RECETAS_ROLLS : tipo==='nigiri' ? RECETAS_NIGIRIS : null
+      if(!arr) return
+      const idx = arr.findIndex(r=>r.n===nombre)
+      if(idx>=0){
+        if(ings.length) arr[idx].ingredientes = ings
+        arr[idx].pv = pv
+        updated++
+      } else {
+        arr.push({n:nombre, pv, ingredientes:ings})
+        added++
+        // Also update menu arrays via localStorage flag
+        localStorage.setItem('raco_menu_custom', JSON.stringify({rolls:RECETAS_ROLLS.map(r=>({n:r.n,pv:getRec('roll',r.n,'pv',r.pv)})),nigiris:RECETAS_NIGIRIS.map(r=>({n:r.n,pv:getRec('nigiri',r.n,'pv',r.pv)}))}))
+      }
+    })
+
+    // Sync prices to menu localStorage keys
+    syncPreciosMenu()
+    renderCostos()
+    showToast(`Recetas: ${updated} actualizadas, ${added} nuevas`)
+    input.value=''
+  }
+  reader.readAsText(file)
+}
+
+// Sync all price overrides so menu.html picks them up
+function syncPreciosMenu(){
+  RECETAS_ROLLS.forEach(r=>{
+    const pv = getRec('roll', r.n, 'pv', r.pv)
+    localStorage.setItem('raco_rec_roll_'+r.n.replace(/[^a-zA-Z0-9]/g,'_')+'_pv', pv)
+  })
+  RECETAS_NIGIRIS.forEach(r=>{
+    const pv = getRec('nigiri', r.n, 'pv', r.pv)
+    localStorage.setItem('raco_rec_nigiri_'+r.n.replace(/[^a-zA-Z0-9]/g,'_')+'_pv', pv)
+  })
+}
+
+// Suggested price based on margen objetivo
+function precioSugerido(costo){
+  const margen = parseFloat(document.getElementById('margen-objetivo')?.value||60)/100
+  return Math.ceil(costo / (1-margen) / 500) * 500 // round to nearest 500
 }
 
 buildList(ROLLS,rq,'r','list-rolls')
