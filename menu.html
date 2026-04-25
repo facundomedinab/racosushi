@@ -353,7 +353,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 <script>
 const WA_NUM='5493816174410'
 
-const ROLLS=[
+// Precios base — se sobreescriben con localStorage si el admin los actualizó
+function getPV(tipo, nombre, base){
+  const key = 'raco_rec_'+tipo+'_'+nombre.replace(/[^a-zA-Z0-9]/g,'_')+'_pv'
+  const v = localStorage.getItem(key)
+  return v !== null ? parseFloat(v) : base
+}
+
+const ROLLS_BASE=[
   {n:'NY Phila',       wa:'NY Phila',       p:'Salmon',      v:10000,spicy:0,desc:'Salmón, queso crema, palta, sésamo'},
   {n:'Salmón · Palta', wa:'Salmon Palta',   p:'Salmon',      v:10000,spicy:0,desc:'Salmón, palta, sésamo negro'},
   {n:'Maracuyá',       wa:'Maracuya',       p:'Trucha',      v:13000,spicy:0,desc:'Trucha, palta, salsa agridulce de maracuyá, masa filo crocante'},
@@ -366,7 +373,7 @@ const ROLLS=[
   {n:'Rocoto Lango 🌶',wa:'Rocoto Lango',   p:'Langostino',  v:13000,spicy:1,desc:'Langostino apanado en panko, rocoto mayo, ralladura de limón'},
   {n:'Kimchi Lango',   wa:'Kimchi Lango',   p:'Langostino',  v:13000,spicy:0,desc:'Langostino apanado en panko, queso crema, kimchi mayo, furikake de frutos secos'},
 ]
-const NIGIRIS=[
+const NIGIRIS_BASE=[
   {n:'Trucha Chalaquita',    wa:'Trucha Chalaquita',    p:'Trucha',      v:2500,spicy:0,desc:'Trucha, ají amarillo nikkei, chalaquita criolla'},
   {n:'Trucha Flambeada',     wa:'Trucha Flambeada',     p:'Trucha',      v:2500,spicy:0,desc:'Trucha flambeada, salsa tare'},
   {n:'Trucha Filo Maracuyá', wa:'Trucha Filo Maracuya', p:'Trucha',      v:2500,spicy:0,desc:'Trucha, reducción de maracuyá, masa filo crocante'},
@@ -377,6 +384,10 @@ const NIGIRIS=[
   {n:'Langostino',           wa:'Langostino',           p:'Langostino',  v:2500,spicy:0,desc:'Langostino, teriyaki, negui'},
   {n:'Ikura',                wa:'Ikura',                p:'Ikura',       v:2500,spicy:0,desc:'Shari, banda de nori, imitación de huevas de salmón'},
 ]
+
+// Apply saved prices from admin
+const ROLLS = ROLLS_BASE.map(r=>({...r, v:getPV('roll', r.n, r.v)}))
+const NIGIRIS = NIGIRIS_BASE.map(n=>({...n, v:getPV('nigiri', n.n, n.v)}))
 const EXTRAS=[
   {n:'Extra Salsa Soja',  wa:'Extra Salsa Soja',  v:700, desc:'50ml de salsa soja extra'},
   {n:'Extra Jengibre',    wa:'Extra Jengibre',    v:700, desc:'Jengibre encurtido extra'},

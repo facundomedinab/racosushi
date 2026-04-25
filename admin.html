@@ -466,7 +466,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     <div id="insumos-wrap">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
         <span style="font-size:.78rem;color:var(--dim)">Editá los precios — los costos se recalculan solos</span>
-        <div style="display:flex;gap:.4rem">
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <label class="btn ghost" style="padding:.3rem .65rem;font-size:.6rem;cursor:pointer">
+            ↑ Importar CSV<input type="file" accept=".csv" style="display:none" onchange="importarInsumosCSV(this)">
+          </label>
           <button class="btn ghost" style="padding:.3rem .65rem;font-size:.6rem" onclick="exportarInsumosCSV()">↓ Exportar CSV</button>
           <button class="btn ghost" style="padding:.3rem .65rem;font-size:.6rem" onclick="resetInsumos()">Resetear precios</button>
         </div>
@@ -2052,6 +2055,34 @@ function exportarInsumosCSV(){
   URL.revokeObjectURL(url)
   showToast('CSV descargado ✓')
 }
+function importarInsumosCSV(input){
+  const file = input.files[0]
+  if(!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    const lines = e.target.result.split('\n').slice(1) // skip header
+    let updated = 0, skipped = 0
+    lines.forEach(line => {
+      const parts = line.split(',')
+      if(parts.length < 4) return
+      const nombre = parts[0].trim()
+      const precio = parseFloat(parts[3])
+      if(isNaN(precio)||precio<=0){ skipped++; return }
+      // Match by name
+      const key = Object.keys(INSUMOS_BASE).find(k => 
+        INSUMOS_BASE[k].n.replace(/,/g,'').toLowerCase() === nombre.toLowerCase()
+      )
+      if(key){ localStorage.setItem('raco_ins_'+key, precio); updated++ }
+      else skipped++
+    })
+    renderInsumos()
+    if(document.getElementById('tab-costos').classList.contains('on')) renderCostos()
+    showToast(`CSV importado: ${updated} actualizados, ${skipped} no encontrados`)
+    input.value = ''
+  }
+  reader.readAsText(file)
+}
+
 function resetInsumos(){
   if(!confirm('¿Resetear todos los precios a los valores originales?')) return
   Object.keys(INSUMOS_BASE).forEach(k => localStorage.removeItem('raco_ins_'+k))
@@ -2112,8 +2143,13 @@ function resetSimCompras(){
 }
 
 function calcCompras(){
-  const totales = {}
-  const add = (k, g) => { totales[k] = (totales[k]||0) + g }
+  const totales = {} // key -> {n, g, costo}
+  const add = (k, g) => {
+    if(!INSUMOS_BASE[k]) return
+    if(!totales[k]) totales[k] = {n:INSUMOS_BASE[k].n, g:0, costo:0}
+    totales[k].g += g
+    totales[k].costo += getP(k)*g
+  }
 
   RECETAS_ROLLS.forEach((rec, i) => {
     const q = simQ.r[i]
@@ -2144,40 +2180,28 @@ function calcCompras(){
   const totalNig   = simQ.n.reduce((a,v)=>a+v,0)
   if(!totalRolls && !totalNig){ el.innerHTML=''; return }
 
-  // Group by proveedor
-  const porProv = {}
-  Object.entries(totales).forEach(([k,g])=>{
-    if(!INSUMOS_BASE[k]||g<=0) return
-    const ins = INSUMOS_BASE[k]
-    if(!porProv[ins.prov]) porProv[ins.prov]=[]
-    porProv[ins.prov].push({n:ins.n, g:Math.ceil(g), costo:Math.ceil(getP(k)*g)})
-  })
+  const items = Object.values(totales).filter(it=>it.g>0).sort((a,b)=>a.n.localeCompare(b.n))
+  let totalGeneral = items.reduce((a,it)=>a+it.costo,0)
 
-  let totalGeneral = 0
   let html = `<div style="font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:.08em;margin-bottom:.75rem;text-transform:uppercase">
     ${totalRolls ? totalRolls+' roll'+(totalRolls>1?'s':'') : ''}${totalRolls&&totalNig?' · ':''}${totalNig ? totalNig+' nigiri'+(totalNig>1?'s':'') : ''}
-  </div>`
+  </div>
+  <div class="compra-section">`
 
-  Object.entries(porProv).sort().forEach(([prov, items])=>{
-    const sub = items.reduce((a,i)=>a+i.costo,0)
-    totalGeneral += sub
-    html += `<div class="compra-section">
-      <div class="compra-proveedor">🛒 ${prov}</div>`
-    items.sort((a,b)=>a.n.localeCompare(b.n)).forEach(it=>{
-      html += `<div class="compra-row">
-        <span class="compra-ing">${it.n}</span>
-        <div class="compra-detalle">
-          <span class="compra-g">${it.g}g</span>
-          <span class="compra-costo">${money(it.costo)}</span>
-        </div>
-      </div>`
-    })
-    html += `<div class="compra-total"><span>Subtotal ${prov}</span><span>${money(sub)}</span></div></div>`
+  items.forEach(it=>{
+    html += `<div class="compra-row">
+      <span class="compra-ing">${it.n}</span>
+      <div class="compra-detalle">
+        <span class="compra-g">${Math.ceil(it.g)}g</span>
+        <span class="compra-costo">${money(Math.ceil(it.costo))}</span>
+      </div>
+    </div>`
   })
 
-  html += `<div style="background:rgba(201,169,110,.08);border:.5px solid var(--accent2);border-radius:7px;padding:.85rem 1rem;margin-top:.5rem;display:flex;justify-content:space-between;align-items:center">
+  html += `</div>
+  <div style="background:rgba(201,169,110,.08);border:.5px solid var(--accent2);border-radius:7px;padding:.85rem 1rem;margin-top:.5rem;display:flex;justify-content:space-between;align-items:center">
     <span style="font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Total estimado</span>
-    <span style="font-family:var(--mono);font-size:1.1rem;font-weight:500;color:var(--accent)">${money(totalGeneral)}</span>
+    <span style="font-family:var(--mono);font-size:1.1rem;font-weight:500;color:var(--accent)">${money(Math.ceil(totalGeneral))}</span>
   </div>`
 
   el.innerHTML = html
