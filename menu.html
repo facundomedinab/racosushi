@@ -216,8 +216,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         <div class="field" style="grid-column:1/-1">
           <label>Dirección</label>
           <div style="display:grid;grid-template-columns:1fr auto auto;gap:.4rem">
-            <input type="text" id="f-addr" placeholder="Calle" autocomplete="off" oninput="dirConfirmada=null;lastGeoResult=null;buscarDir()">
-            <input type="text" id="f-numero" placeholder="Nro" autocomplete="off" style="width:64px" oninput="dirConfirmada=null;lastGeoResult=null;buscarDir()">
+            <input type="text" id="f-addr" placeholder="Calle" autocomplete="off" oninput="buscarDir()">
+            <input type="text" id="f-numero" placeholder="Nro" autocomplete="off" style="width:64px" oninput="buscarDir()">
             <input type="text" id="f-dpto" placeholder="Dpto" autocomplete="off" style="width:72px">
           </div>
           <!-- Sugerencias de dirección -->
@@ -225,7 +225,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         </div>
         <div class="field" style="grid-column:1/-1">
           <label>Localidad</label>
-          <input type="text" id="f-localidad" placeholder="San Isidro, Martínez, Acassuso..." autocomplete="off" oninput="dirConfirmada=null;lastGeoResult=null;buscarDir()">
+          <input type="text" id="f-localidad" placeholder="San Isidro, Martínez, Acassuso..." autocomplete="off" oninput="buscarDir()">
         </div>
         <!-- MAPA -->
         <div style="grid-column:1/-1;display:none" id="map-wrap">
@@ -426,47 +426,21 @@ const $=id=>document.getElementById(id)
 const money=n=>'$'+Math.round(n).toLocaleString('es-AR')
 let metodoPago=''
 
-// Protein order for grouping
-const PROT_ORDER = ['Salmon','Trucha','Pesca blanca','Langostino','Ikura']
-function sortByProtein(items){
-  return [...items].sort((a,b)=>{
-    const ai = PROT_ORDER.indexOf(a.p) < 0 ? 999 : PROT_ORDER.indexOf(a.p)
-    const bi = PROT_ORDER.indexOf(b.p) < 0 ? 999 : PROT_ORDER.indexOf(b.p)
-    if(ai !== bi) return ai - bi
-    return (a.p||'').localeCompare(b.p||'')
-  })
-}
-
 function buildList(items,qtys,prefix,cid,showBadge){
-  const el=$(cid); el.innerHTML=''
-  // Sort by protein if rolls or nigiris
-  const doGroup = showBadge && items.some(it=>it.p)
-  const sorted = doGroup ? sortByProtein(items) : items
-  // Build index map: sorted index -> original index (for qty/ctrl)
-  const idxMap = sorted.map(it=>items.indexOf(it))
-
-  let lastProt = null
-  sorted.forEach((it, si)=>{
-    const i = idxMap[si]  // original index for qtys/chg
-    // Protein separator
-    if(doGroup && it.p && it.p !== lastProt){
-      lastProt = it.p
-      const sep = document.createElement('div')
-      sep.className = 'prot-sep'
-      sep.innerHTML = `<span class="prot-sep-label">${it.p}</span>`
-      el.appendChild(sep)
-    }
+  const el=$(cid);el.innerHTML=''
+  items.forEach((it,i)=>{
     const d=document.createElement('div')
     d.className='card'+(qtys[i]>0?' sel':'')
     d.id=`${prefix}-card-${i}`
     const picBadge=it.spicy===1?'<span class="badge b-pic">🌶 Picante</span>':''
+    const pBadge=showBadge&&it.p?`<span class="badge ${BADGE[it.p]||'b-pes'}">${it.p}</span>`:'';
     const piezas=prefix==='r'?'<span class="badge b-piezas">8 pzas</span>':prefix==='n'?'<span class="badge b-piezas">1 pieza</span>':''
     d.innerHTML=`
       <div class="card-top">
         <div class="card-info">
           <div class="card-name">${it.n}</div>
           <div class="card-desc">${it.desc}</div>
-          ${piezas||picBadge?`<div class="card-badges">${piezas}${picBadge}</div>`:''}
+          ${pBadge||piezas||picBadge?`<div class="card-badges">${pBadge}${piezas}${picBadge}</div>`:''}
         </div>
         <div class="card-right">
           <div class="card-price">${money(it.v)}</div>
@@ -776,7 +750,6 @@ function confirmarUbicacion(){
     if(btnMB)btnMB.disabled=false
     $('zona-error').style.display='none'
   } else {
-    dirConfirmada=null
     $('map-label').textContent='⚠ Fuera de zona de entrega'
     $('map-label').style.color='#f87171'
     // Bloquear botones de envío
@@ -784,15 +757,6 @@ function confirmarUbicacion(){
     if(btnSB){btnSB.disabled=true;btnSB.textContent='Fuera de zona de entrega'}
     if(btnMB){btnMB.disabled=true;btnMB.textContent='Fuera de zona ✕'}
     $('zona-error').style.display='block'
-    // Re-enable address fields so user can try again
-    $('map-confirm-btn').disabled=false
-    $('map-confirm-btn').textContent='Confirmar ubicación'
-    $('map-confirm-btn').style.background=''
-    $('map-confirm-btn').style.color=''
-    $('f-addr').disabled=false
-    $('f-numero').disabled=false
-    $('f-localidad').disabled=false
-    lastGeoResult=null
   }
 }
 
