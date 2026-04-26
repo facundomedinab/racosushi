@@ -426,9 +426,19 @@ const $=id=>document.getElementById(id)
 const money=n=>'$'+Math.round(n).toLocaleString('es-AR')
 let metodoPago=''
 
+const PROT_ORDER=['Salmon','Trucha','Pesca blanca','Langostino','Ikura']
 function buildList(items,qtys,prefix,cid,showBadge){
   const el=$(cid);el.innerHTML=''
-  items.forEach((it,i)=>{
+  // Sort by protein order if rolls/nigiris, keep same original index for chg()
+  const doSort=showBadge&&items.some(it=>it.p)
+  const sorted=doSort
+    ? items.map((it,i)=>({it,i})).sort((a,b)=>{
+        const ai=PROT_ORDER.indexOf(a.it.p)<0?999:PROT_ORDER.indexOf(a.it.p)
+        const bi=PROT_ORDER.indexOf(b.it.p)<0?999:PROT_ORDER.indexOf(b.it.p)
+        return ai!==bi?ai-bi:(a.it.p||'').localeCompare(b.it.p||'')
+      })
+    : items.map((it,i)=>({it,i}))
+  sorted.forEach(({it,i})=>{
     const d=document.createElement('div')
     d.className='card'+(qtys[i]>0?' sel':'')
     d.id=`${prefix}-card-${i}`
@@ -750,13 +760,22 @@ function confirmarUbicacion(){
     if(btnMB)btnMB.disabled=false
     $('zona-error').style.display='none'
   } else {
+    dirConfirmada=null
+    lastGeoResult=null
     $('map-label').textContent='⚠ Fuera de zona de entrega'
     $('map-label').style.color='#f87171'
-    // Bloquear botones de envío
     const btnSB=$('sb-confirmar'),btnMB=$('mb-btn')
     if(btnSB){btnSB.disabled=true;btnSB.textContent='Fuera de zona de entrega'}
     if(btnMB){btnMB.disabled=true;btnMB.textContent='Fuera de zona ✕'}
     $('zona-error').style.display='block'
+    // Re-enable so user can type a new address without reloading
+    $('map-confirm-btn').disabled=false
+    $('map-confirm-btn').textContent='Confirmar ubicación'
+    $('map-confirm-btn').style.background=''
+    $('map-confirm-btn').style.color=''
+    $('f-addr').value=''
+    $('f-numero').value=''
+    $('f-localidad').value=''
   }
 }
 
