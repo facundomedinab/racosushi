@@ -1795,7 +1795,21 @@ function costoIng(k, g){
   if(k === 'shari_n') return shariCosto() * (15/120)
   if(k.startsWith('salsa_')){
     const salsaKey = k.replace('salsa_','')
-    return salsaCostoG(salsaKey) * g
+    // First try hardcoded switch
+    const hardcoded = salsaCostoG(salsaKey)
+    if(hardcoded > 0) return hardcoded * g
+    // Then look in RECETAS_SALSAS dynamically (for custom salsas from CSV)
+    const salsa = RECETAS_SALSAS.find(s => s.k === k || s.k === salsaKey || 
+      s.n.toLowerCase().replace(/[^a-z0-9]/g,'_') === salsaKey ||
+      s.n.toLowerCase().replace(/\s+/g,'_') === salsaKey)
+    if(salsa && salsa.batch > 0){
+      const batchCosto = salsa.ingredientes.reduce((acc, ing)=>{
+        const ik = ing.k || ing[0], ig = ing.g || ing[1] || 0
+        return acc + (INSUMOS_BASE[ik] ? getP(ik)*ig : 0)
+      }, 0)
+      return (batchCosto / salsa.batch) * g
+    }
+    return 0
   }
   if(INSUMOS_BASE[k]) return getP(k) * g
   return 0
