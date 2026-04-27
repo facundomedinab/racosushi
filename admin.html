@@ -37,6 +37,37 @@
 .ud-divider{height:.5px;background:var(--border2);margin:.5rem 0}
 .ud-logout{width:100%;margin-top:.4rem;padding:.45rem;background:transparent;border:.5px solid var(--border2);border-radius:4px;font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--red);cursor:pointer;transition:all .15s}
 .ud-logout:hover{background:#1a0808;border-color:var(--red)}
+
+/* ── STATS EXTENDED ── */
+.stats-period-nav{display:flex;gap:.35rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.sp-btn{background:transparent;border:.5px solid var(--border2);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .65rem;cursor:pointer;transition:all .15s}
+.sp-btn.on{background:var(--surface2);color:var(--accent);border-color:var(--accent2)}
+.stats-section{margin-bottom:1.5rem}
+.stats-section-title{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;padding-bottom:.35rem;border-bottom:.5px solid var(--border)}
+.stat-grid-big{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:1.25rem}
+.stat-grid-small{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1.25rem}
+@media(max-width:700px){.stat-grid-big{grid-template-columns:repeat(2,1fr)}.stat-grid-small{grid-template-columns:repeat(2,1fr)}}
+.scard{background:var(--surface);border:.5px solid var(--border);border-radius:6px;padding:.65rem .8rem;display:flex;flex-direction:column;gap:.2rem}
+.scard-lbl{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.scard-val{font-family:var(--mono);font-size:1.15rem;font-weight:500;color:var(--text2)}
+.scard-val.gold{color:var(--accent)}
+.scard-val.green{color:var(--green)}
+.scard-val.sm{font-size:.9rem}
+.scard-sub{font-size:.68rem;color:var(--muted);margin-top:.1rem}
+.jornada-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.jornada-table th{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:.45rem .6rem;border-bottom:.5px solid var(--border);text-align:left;white-space:nowrap}
+.jornada-table td{padding:.5rem .6rem;border-bottom:.5px solid var(--border);vertical-align:top}
+.jornada-table tr:last-child td{border-bottom:none}
+.jornada-table tr:hover td{background:var(--surface2)}
+.cliente-card{background:var(--surface);border:.5px solid var(--border);border-radius:6px;padding:.6rem .8rem;margin-bottom:.35rem}
+.cliente-card-top{display:flex;justify-content:space-between;align-items:flex-start}
+.cliente-nombre{font-size:.85rem;font-weight:500}
+.cliente-badge{font-family:var(--mono);font-size:.62rem;color:var(--accent);background:rgba(201,169,110,.1);border:.5px solid var(--accent2);border-radius:3px;padding:.1rem .4rem}
+.cliente-meta{font-size:.72rem;color:var(--muted);margin-top:.25rem}
+.hora-chart{display:flex;align-items:flex-end;gap:3px;height:50px;margin-top:.5rem}
+.hora-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.hora-bar{width:100%;background:var(--accent2);border-radius:2px 2px 0 0;min-height:2px;transition:height .3s}
+.hora-lbl{font-family:var(--mono);font-size:.5rem;color:var(--muted)}
 /* STOCK removed */
 /* APP */
 .app-wrap{display:none}
@@ -515,7 +546,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 
   <!-- ESTADÍSTICAS -->
   <div id="tab-stats" class="panel">
-    <div id="stats-wrap"><div class="empty-hist">Guardá órdenes para ver estadísticas</div></div>
+    <div id="stats-wrap">
+      <div class="stats-period-nav">
+        <button class="sp-btn on" onclick="setStatsPeriod('todo',this)">Todo</button>
+        <button class="sp-btn" onclick="setStatsPeriod('hoy',this)">Hoy</button>
+        <button class="sp-btn" onclick="setStatsPeriod('semana',this)">7 días</button>
+        <button class="sp-btn" onclick="setStatsPeriod('mes',this)">30 días</button>
+      </div>
+      <div id="stats-content"><div class="empty-hist">Guardá órdenes para ver estadísticas<br><span style="font-size:.7rem;color:var(--muted)">El historial se acumula y no se borra al limpiar la jornada</span></div></div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -1269,43 +1308,196 @@ function copiarAcumulado(){
 
 // ── ESTADÍSTICAS ──────────────────────────────────────────────────
 function getHistStats(){return JSON.parse(localStorage.getItem('sushi_hist_stats')||'[]')}
+
+let _statsPeriod='todo'
+function setStatsPeriod(p,btn){
+  _statsPeriod=p
+  document.querySelectorAll('.sp-btn').forEach(b=>b.classList.remove('on'))
+  btn.classList.add('on')
+  renderStats()
+}
+
+function filtrarOrdsPeriodo(ords){
+  if(_statsPeriod==='todo') return ords
+  const ahora=new Date(), ms={hoy:86400000,semana:7*86400000,mes:30*86400000}[_statsPeriod]||0
+  return ords.filter(o=>{
+    if(!o.fecha) return true
+    const partes=o.fecha.split('/'), d=new Date(+partes[2],+partes[1]-1,+partes[0])
+    if(o.hora){ const [hh,mm]=(o.hora||'0:0').split(':'); d.setHours(+hh,+mm) }
+    return (ahora-d)<=ms
+  })
+}
+
 function renderStats(){
-  const ords=getHistStats()  // historial permanente
-  const el=$('stats-wrap')
-  if(!ords.length){el.innerHTML='<div class="empty-hist">Guardá órdenes para ver estadísticas<br><span style="font-size:.7rem;color:var(--muted)">El historial se acumula y no se borra al limpiar la jornada</span></div>';return}
+  const el=$('stats-content')
+  if(!el) return
+  const allOrds=getHistStats()
+  const ords=filtrarOrdsPeriodo(allOrds)
+  if(!ords.length){el.innerHTML='<div class="empty-hist">Sin órdenes en el período seleccionado</div>';return}
 
-  const total=ords.reduce((a,o)=>a+o.total,0)
+  // ── Financiero ──
+  const totalIngresos=ords.reduce((a,o)=>a+o.total,0)
+  const totalMP=ords.filter(o=>(o.pago||'').toLowerCase().includes('mercado')||
+    (o.pago||'').toLowerCase().includes('mp')).reduce((a,o)=>a+o.total,0)
+  const totalEfec=ords.filter(o=>(o.pago||'').toLowerCase().includes('efect')).reduce((a,o)=>a+o.total,0)
   const totalEnvios=ords.reduce((a,o)=>a+(o.envio||0),0)
-  const ticket=total/ords.length
-  const listos=ords.length  // en stats todas son completadas
+  const ticket=totalIngresos/ords.length
+  const tktMax=Math.max(...ords.map(o=>o.total))
+  const tktMin=Math.min(...ords.map(o=>o.total))
+  const enviosProm=ords.filter(o=>o.envio>0).length?totalEnvios/ords.filter(o=>o.envio>0).length:0
 
-  // Ranking productos
-  const rankRolls=ROLLS.map((r,i)=>({n:r.n,p:r.p,cnt:ords.reduce((a,o)=>a+o.rq[i],0)})).filter(x=>x.cnt>0).sort((a,b)=>b.cnt-a.cnt)
-  const rankNigiris=NIGIRIS.map((n,i)=>({n:n.n,p:n.p,cnt:ords.reduce((a,o)=>a+o.nq[i],0)})).filter(x=>x.cnt>0).sort((a,b)=>b.cnt-a.cnt)
-  const maxR=rankRolls[0]?.cnt||1,maxN=rankNigiris[0]?.cnt||1
+  // ── Productos ──
+  const rankRolls=ROLLS.map((r,i)=>({n:r.n,p:r.p,cnt:ords.reduce((a,o)=>a+(o.rq[i]||0),0)})).filter(x=>x.cnt>0).sort((a,b)=>b.cnt-a.cnt)
+  const rankNigiris=NIGIRIS.map((n,i)=>({n:n.n,p:n.p,cnt:ords.reduce((a,o)=>a+(o.nq[i]||0),0)})).filter(x=>x.cnt>0).sort((a,b)=>b.cnt-a.cnt)
+  const maxR=rankRolls[0]?.cnt||1, maxN=rankNigiris[0]?.cnt||1
+  const estrellaRoll=rankRolls[0]?.n||'—'
+  const estrellaNig=rankNigiris[0]?.n||'—'
 
-  // Proteínas
+  // ── Proteínas ──
   const protMap={}
   ords.forEach(o=>{
-    ROLLS.forEach((r,i)=>{if(o.rq[i]>0){protMap[r.p]=(protMap[r.p]||0)+o.rq[i]}})
-    NIGIRIS.forEach((n,i)=>{if(o.nq[i]>0){protMap[n.p]=(protMap[n.p]||0)+o.nq[i]}})
+    ROLLS.forEach((r,i)=>{if((o.rq[i]||0)>0) protMap[r.p]=(protMap[r.p]||0)+o.rq[i]})
+    NIGIRIS.forEach((n,i)=>{if((o.nq[i]||0)>0) protMap[n.p]=(protMap[n.p]||0)+o.nq[i]})
   })
   const protRank=Object.entries(protMap).sort((a,b)=>b[1]-a[1])
   const maxProt=protRank[0]?.[1]||1
 
-  let html=`
-  <div class="stat-grid">
-    <div class="stat-card"><div class="stat-label">Total jornada</div><div class="stat-val">${money(total)}</div></div>
-    <div class="stat-card"><div class="stat-label">Ticket promedio</div><div class="stat-val sm">${money(ticket)}</div></div>
-    <div class="stat-card"><div class="stat-label">Órdenes</div><div class="stat-val green">${ords.length}</div><div class="stat-sub">${listos} listas · ${ords.length-listos} pendientes</div></div>
-    <div class="stat-card"><div class="stat-label">Envíos</div><div class="stat-val sm">${money(totalEnvios)}</div><div class="stat-sub">${ords.filter(o=>o.envio>0).length} con envío</div></div>
-  </div>`
+  // ── Hora pico ──
+  const horaMap={}
+  ords.forEach(o=>{
+    if(!o.hora) return
+    const h=parseInt((o.hora||'0').split(':')[0])
+    horaMap[h]=(horaMap[h]||0)+1
+  })
+  const horasPico=Object.entries(horaMap).sort((a,b)=>b[1]-a[1])
+  const horaPico=horasPico[0]?`${horasPico[0][0]}:00 - ${+horasPico[0][0]+1}:00`:'—'
 
+  // Tiempo promedio entre pedidos (minutos)
+  const ordenadas=[...ords].filter(o=>o.hora).sort((a,b)=>{
+    const ta=(a.fecha||'').split('/').reverse().join('')+a.hora
+    const tb=(b.fecha||'').split('/').reverse().join('')+b.hora
+    return ta.localeCompare(tb)
+  })
+  let diffSum=0,diffCnt=0
+  for(let i=1;i<ordenadas.length;i++){
+    const pa=ordenadas[i-1], pb=ordenadas[i]
+    if(pa.fecha===pb.fecha&&pa.hora&&pb.hora){
+      const [ah,am]=pa.hora.split(':').map(Number)
+      const [bh,bm]=pb.hora.split(':').map(Number)
+      const diff=(bh*60+bm)-(ah*60+am)
+      if(diff>0&&diff<300){diffSum+=diff;diffCnt++}
+    }
+  }
+  const tiempoEntreped=diffCnt?Math.round(diffSum/diffCnt):0
+
+  // ── Jornadas ──
+  const jornadasMap={}
+  ords.forEach(o=>{
+    const f=o.fecha||'Sin fecha'
+    if(!jornadasMap[f]) jornadasMap[f]={fecha:f,ords:[],total:0,mp:0,efec:0,rolls:0,nigs:0}
+    const j=jornadasMap[f]
+    j.ords.push(o); j.total+=o.total
+    if((o.pago||'').toLowerCase().includes('mercado')||(o.pago||'').toLowerCase().includes('mp')) j.mp+=o.total
+    if((o.pago||'').toLowerCase().includes('efect')) j.efec+=o.total
+    ROLLS.forEach((_,i)=>j.rolls+=(o.rq[i]||0))
+    NIGIRIS.forEach((_,i)=>j.nigs+=(o.nq[i]||0))
+  })
+  const jornadas=Object.values(jornadasMap).sort((a,b)=>b.fecha.localeCompare(a.fecha))
+
+  // ── Clientes recurrentes por tel ──
+  const clientesTel={}
+  ords.forEach(o=>{
+    const k=(o.tel||'').replace(/\D/g,'')
+    if(!k) return
+    if(!clientesTel[k]) clientesTel[k]={nombre:o.cliente,tel:k,ords:[],addrs:new Set()}
+    clientesTel[k].ords.push(o)
+    if(o.addrDisplay||o.addr) clientesTel[k].addrs.add((o.addrDisplay||o.addr||'').trim().toLowerCase())
+  })
+  const recurrentes=Object.values(clientesTel).filter(c=>c.ords.length>1).sort((a,b)=>b.ords.length-a.ords.length)
+
+  // ── Direcciones recurrentes ──
+  const dirMap={}
+  ords.forEach(o=>{
+    const d=(o.addrDisplay||o.addr||'').trim().toLowerCase()
+    if(!d) return
+    if(!dirMap[d]) dirMap[d]={addr:o.addrDisplay||o.addr,cnt:0,clientes:new Set()}
+    dirMap[d].cnt++
+    dirMap[d].clientes.add(o.cliente||'—')
+  })
+  const dirsRecurrentes=Object.values(dirMap).filter(d=>d.cnt>1).sort((a,b)=>b.cnt-a.cnt).slice(0,10)
+
+  // ── Ganancia bruta estimada ──
+  let gananciaEst=0
+  ords.forEach(o=>{
+    ROLLS.forEach((r,i)=>{
+      const q=o.rq[i]||0; if(!q) return
+      const rec=RECETAS_ROLLS.find(rec=>rec.n===r.n)
+      if(rec) gananciaEst+=(r.v-costoReceta(rec,'roll'))*q
+    })
+    NIGIRIS.forEach((n,i)=>{
+      const q=o.nq[i]||0; if(!q) return
+      const rec=RECETAS_NIGIRIS.find(rec=>rec.n===n.n)
+      if(rec) gananciaEst+=(n.v-costoReceta(rec,'nigiri'))*q
+    })
+  })
+
+  // ── BUILD HTML ──
+  let h=''
+
+  // KPIs principales
+  h+=`<div class="stats-section">
+  <div class="stats-section-title">Financiero</div>
+  <div class="stat-grid-big">
+    <div class="scard"><div class="scard-lbl">Ingresos totales</div><div class="scard-val gold">${money(totalIngresos)}</div></div>
+    <div class="scard"><div class="scard-lbl">Mercado Pago</div><div class="scard-val sm">${money(totalMP)}</div><div class="scard-sub">${totalMP>0?(totalMP/totalIngresos*100).toFixed(0)+'%':'-'} del total</div></div>
+    <div class="scard"><div class="scard-lbl">Efectivo</div><div class="scard-val sm">${money(totalEfec)}</div><div class="scard-sub">${totalEfec>0?(totalEfec/totalIngresos*100).toFixed(0)+'%':'-'} del total</div></div>
+    <div class="scard"><div class="scard-lbl">Ganancia bruta est.</div><div class="scard-val green sm">${money(gananciaEst)}</div></div>
+  </div>
+  <div class="stat-grid-small">
+    <div class="scard"><div class="scard-lbl">Ticket promedio</div><div class="scard-val sm">${money(ticket)}</div></div>
+    <div class="scard"><div class="scard-lbl">Ticket máximo</div><div class="scard-val sm">${money(tktMax)}</div></div>
+    <div class="scard"><div class="scard-lbl">Ticket mínimo</div><div class="scard-val sm">${money(tktMin)}</div></div>
+    <div class="scard"><div class="scard-lbl">Órdenes totales</div><div class="scard-val green">${ords.length}</div></div>
+    <div class="scard"><div class="scard-lbl">Total envíos</div><div class="scard-val sm">${money(totalEnvios)}</div><div class="scard-sub">Prom: ${money(enviosProm)}</div></div>
+    <div class="scard"><div class="scard-lbl">Hora pico</div><div class="scard-val sm" style="font-size:.82rem">${horaPico}</div>${tiempoEntreped?`<div class="scard-sub">Cada ~${tiempoEntreped}min</div>`:''}
+    </div>
+  </div></div>`
+
+  // Estrella del día
+  h+=`<div class="stats-section">
+  <div class="stats-section-title">Productos estrella</div>
+  <div class="stat-grid-small">
+    <div class="scard"><div class="scard-lbl">Roll más pedido</div><div class="scard-val sm" style="font-size:.82rem">${estrellaRoll}</div></div>
+    <div class="scard"><div class="scard-lbl">Nigiri más pedido</div><div class="scard-val sm" style="font-size:.82rem">${estrellaNig}</div></div>
+    <div class="scard"><div class="scard-lbl">Proteína líder</div><div class="scard-val sm" style="font-size:.82rem">${protRank[0]?.[0]||'—'}</div></div>
+  </div></div>`
+
+  // Jornadas
+  h+=`<div class="stats-section">
+  <div class="stats-section-title">Historial por jornada</div>
+  <div style="overflow-x:auto">
+  <table class="jornada-table">
+    <tr><th>Fecha</th><th>Órdenes</th><th>Rolls</th><th>Nigiris</th><th>Total</th><th>MP</th><th>Efectivo</th><th>Tkt prom</th></tr>`
+  jornadas.forEach(j=>{
+    h+=`<tr>
+      <td style="font-family:var(--mono);font-size:.75rem">${j.fecha}</td>
+      <td style="text-align:center">${j.ords.length}</td>
+      <td style="text-align:center">${j.rolls}</td>
+      <td style="text-align:center">${j.nigs}</td>
+      <td style="font-family:var(--mono);color:var(--accent)">${money(j.total)}</td>
+      <td style="font-family:var(--mono);font-size:.72rem">${j.mp?money(j.mp):'—'}</td>
+      <td style="font-family:var(--mono);font-size:.72rem">${j.efec?money(j.efec):'—'}</td>
+      <td style="font-family:var(--mono);font-size:.72rem">${money(j.total/j.ords.length)}</td>
+    </tr>`
+  })
+  h+=`</table></div></div>`
+
+  // Ranking rolls
   if(rankRolls.length){
-    html+=`<div class="slabel" style="margin-top:1.5rem">Rolls más pedidos</div>
+    h+=`<div class="stats-section"><div class="stats-section-title">Rolls más pedidos</div>
     <div style="background:var(--surface);border:.5px solid var(--border2);border-radius:7px;overflow:hidden">`
     rankRolls.forEach(r=>{
-      html+=`<div class="rank-row">
+      h+=`<div class="rank-row">
         <span class="rank-name"><span class="tag ${TAG[r.p]||'t-pes'}" style="margin-right:.4rem"></span>${r.n}</span>
         <div class="rank-right">
           <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(r.cnt/maxR*100)}%"></div></div>
@@ -1313,14 +1505,15 @@ function renderStats(){
         </div>
       </div>`
     })
-    html+=`</div>`
+    h+=`</div></div>`
   }
 
+  // Ranking nigiris
   if(rankNigiris.length){
-    html+=`<div class="slabel" style="margin-top:1.25rem">Nigiris más pedidos</div>
+    h+=`<div class="stats-section"><div class="stats-section-title">Nigiris más pedidos</div>
     <div style="background:var(--surface);border:.5px solid var(--border2);border-radius:7px;overflow:hidden">`
     rankNigiris.forEach(n=>{
-      html+=`<div class="rank-row">
+      h+=`<div class="rank-row">
         <span class="rank-name"><span class="tag ${TAG[n.p]||'t-pes'}" style="margin-right:.4rem"></span>${n.n}</span>
         <div class="rank-right">
           <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(n.cnt/maxN*100)}%"></div></div>
@@ -1328,26 +1521,78 @@ function renderStats(){
         </div>
       </div>`
     })
-    html+=`</div>`
+    h+=`</div></div>`
   }
 
+  // Proteínas
   if(protRank.length){
-    html+=`<div class="slabel" style="margin-top:1.25rem">Proteínas más pedidas</div>
+    h+=`<div class="stats-section"><div class="stats-section-title">Proteínas más pedidas</div>
     <div style="background:var(--surface);border:.5px solid var(--border2);border-radius:7px;overflow:hidden">`
     protRank.forEach(([prot,cnt])=>{
-      html+=`<div class="rank-row">
-        <span class="rank-name"><span class="tag ${TAG[prot]||'t-pes'}" style="margin-right:.4rem"></span>${prot}</span>
+      h+=`<div class="rank-row">
+        <span class="rank-name"><span class="tag ${TAG[prot]||'t-pes'}" style="margin-right:.4rem"></span>${prot||'Sin proteína'}</span>
         <div class="rank-right">
           <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(cnt/maxProt*100)}%"></div></div>
           <span class="rank-cnt">${cnt}×</span>
         </div>
       </div>`
     })
-    html+=`</div>`
+    h+=`</div></div>`
   }
 
-  html+=`<button class="btn ghost" style="width:100%;margin-top:1rem;font-size:.6rem" onclick="if(confirm('¿Borrar todo el historial de estadísticas?')){localStorage.removeItem('sushi_hist_stats');renderStats()}">Limpiar historial estadísticas</button>`
-  el.innerHTML=html
+  // Hora pico chart
+  if(Object.keys(horaMap).length>1){
+    const maxH=Math.max(...Object.values(horaMap))
+    h+=`<div class="stats-section"><div class="stats-section-title">Distribución horaria</div>
+    <div class="hora-chart">`
+    for(let hr=11;hr<=23;hr++){
+      const cnt=horaMap[hr]||0
+      h+=`<div class="hora-bar-wrap">
+        <div class="hora-bar" style="height:${cnt?Math.max(4,Math.round(cnt/maxH*46))+'px':'2px'};opacity:${cnt?1:.25}"></div>
+        <div class="hora-lbl">${hr}</div>
+      </div>`
+    }
+    h+=`</div></div>`
+  }
+
+  // Clientes recurrentes
+  if(recurrentes.length){
+    h+=`<div class="stats-section"><div class="stats-section-title">Clientes recurrentes</div>`
+    recurrentes.slice(0,15).forEach(c=>{
+      const totalCliente=c.ords.reduce((a,o)=>a+o.total,0)
+      const addrsArr=[...c.addrs].filter(Boolean)
+      h+=`<div class="cliente-card">
+        <div class="cliente-card-top">
+          <span class="cliente-nombre">${c.nombre}</span>
+          <span class="cliente-badge">${c.ords.length} pedidos</span>
+        </div>
+        <div class="cliente-meta">
+          ${c.tel?`📱 ${c.tel} · `:''}Total gastado: ${money(totalCliente)} · Tkt prom: ${money(totalCliente/c.ords.length)}
+        </div>
+        ${addrsArr.length?`<div class="cliente-meta" style="margin-top:.2rem">📍 ${addrsArr.join(' | ')}</div>`:''}
+      </div>`
+    })
+    h+=`</div>`
+  }
+
+  // Direcciones más frecuentes
+  if(dirsRecurrentes.length){
+    h+=`<div class="stats-section"><div class="stats-section-title">Direcciones más frecuentes</div>
+    <div style="background:var(--surface);border:.5px solid var(--border);border-radius:6px;overflow:hidden">`
+    dirsRecurrentes.forEach(d=>{
+      h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;border-bottom:.5px solid var(--border)">
+        <div>
+          <div style="font-size:.8rem">${d.addr}</div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:.1rem">${[...d.clientes].join(', ')}</div>
+        </div>
+        <span style="font-family:var(--mono);font-size:.75rem;color:var(--accent);flex-shrink:0;margin-left:.75rem">${d.cnt} pedidos</span>
+      </div>`
+    })
+    h+=`</div></div>`
+  }
+
+  h+=`<button class="btn ghost" style="width:100%;margin-top:1rem;font-size:.6rem" onclick="if(confirm('¿Borrar todo el historial?')){localStorage.removeItem('sushi_hist_stats');renderStats()}">Limpiar historial estadísticas</button>`
+  el.innerHTML=h
 }
 
 // ── RUTA DEL DÍA ─────────────────────────────────────────────────
