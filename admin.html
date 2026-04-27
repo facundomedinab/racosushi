@@ -291,6 +291,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
+
+/* ── DETALLE ÓRDENES ── */
+.detalle-tabla{width:100%;border-collapse:collapse;font-size:.75rem}
+.detalle-tabla th{font-family:var(--mono);font-size:.55rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:.4rem .55rem;border-bottom:.5px solid var(--border);text-align:left;white-space:nowrap;position:sticky;top:0;background:var(--bg)}
+.detalle-tabla td{padding:.45rem .55rem;border-bottom:.5px solid var(--border);vertical-align:middle;color:var(--text2)}
+.detalle-tabla tr:hover td{background:var(--surface2)}
+.detalle-tabla .td-fecha{font-family:var(--mono);font-size:.7rem;white-space:nowrap;color:var(--muted)}
+.detalle-tabla .td-cliente{font-weight:500;white-space:nowrap}
+.detalle-tabla .td-items{font-size:.72rem;line-height:1.6;color:var(--dim)}
+.detalle-tabla .td-total{font-family:var(--mono);color:var(--accent);white-space:nowrap}
+.detalle-tabla .td-pago{font-family:var(--mono);font-size:.65rem;white-space:nowrap}
+.detalle-tabla .td-addr{font-size:.7rem;color:var(--muted);max-width:160px}
 </style>
 </head>
 <body>
@@ -1472,9 +1484,11 @@ function renderStats(){
     <div class="scard"><div class="scard-lbl">Proteína líder</div><div class="scard-val sm" style="font-size:.82rem">${protRank[0]?.[0]||'—'}</div></div>
   </div></div>`
 
-  // Jornadas
+  // ── Resumen por jornada (tabla compacta) ──
   h+=`<div class="stats-section">
-  <div class="stats-section-title">Historial por jornada</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+    <div class="stats-section-title" style="margin-bottom:0">Resumen por jornada</div>
+  </div>
   <div style="overflow-x:auto">
   <table class="jornada-table">
     <tr><th>Fecha</th><th>Órdenes</th><th>Rolls</th><th>Nigiris</th><th>Total</th><th>MP</th><th>Efectivo</th><th>Tkt prom</th></tr>`
@@ -1488,6 +1502,50 @@ function renderStats(){
       <td style="font-family:var(--mono);font-size:.72rem">${j.mp?money(j.mp):'—'}</td>
       <td style="font-family:var(--mono);font-size:.72rem">${j.efec?money(j.efec):'—'}</td>
       <td style="font-family:var(--mono);font-size:.72rem">${money(j.total/j.ords.length)}</td>
+    </tr>`
+  })
+  h+=`</table></div></div>`
+
+  // ── Detalle completo item x item ──
+  h+=`<div class="stats-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;flex-wrap:wrap;gap:.5rem">
+    <div class="stats-section-title" style="margin-bottom:0">Detalle completo de órdenes</div>
+    <button class="btn ghost" style="padding:.3rem .65rem;font-size:.6rem" onclick="exportarEstadisticasCSV()">↓ Exportar CSV</button>
+  </div>
+  <div style="overflow-x:auto;max-height:520px;overflow-y:auto">
+  <table class="detalle-tabla">
+    <tr>
+      <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Teléfono</th>
+      <th>Dirección</th><th>Rolls</th><th>Nigiris</th><th>Items</th>
+      <th>Subtotal</th><th>Envío</th><th>Total</th><th>Pago</th><th>Nota</th>
+    </tr>`
+  // Sort by fecha+hora desc
+  const ordsDetalle=[...ords].sort((a,b)=>{
+    const ka=(a.fecha||'').split('/').reverse().join('')+(a.hora||'')
+    const kb=(b.fecha||'').split('/').reverse().join('')+(b.hora||'')
+    return kb.localeCompare(ka)
+  })
+  ordsDetalle.forEach(o=>{
+    const rollItems=ROLLS.map((r,i)=>(o.rq[i]>0?o.rq[i]+'× '+r.n:'')).filter(Boolean)
+    const nigItems=NIGIRIS.map((n,i)=>(o.nq[i]>0?o.nq[i]+'× '+n.n:'')).filter(Boolean)
+    const allItems=[...rollItems,...nigItems].join('<br>')
+    const totalRolls=ROLLS.reduce((a,_,i)=>a+(o.rq[i]||0),0)
+    const totalNigs=NIGIRIS.reduce((a,_,i)=>a+(o.nq[i]||0),0)
+    const sub=o.total-(o.envio||0)
+    h+=`<tr>
+      <td class="td-fecha">${o.fecha||'—'}</td>
+      <td class="td-fecha">${o.hora||'—'}</td>
+      <td class="td-cliente">${o.cliente||'—'}</td>
+      <td class="td-pago">${o.tel||'—'}</td>
+      <td class="td-addr">${o.addrDisplay||o.addr||'—'}${o.dpto?' Dpto '+o.dpto:''}</td>
+      <td style="text-align:center;font-family:var(--mono)">${totalRolls||'—'}</td>
+      <td style="text-align:center;font-family:var(--mono)">${totalNigs||'—'}</td>
+      <td class="td-items">${allItems||'—'}</td>
+      <td class="td-total">${money(sub)}</td>
+      <td style="font-family:var(--mono);font-size:.7rem">${o.envio?money(o.envio):'—'}</td>
+      <td class="td-total">${money(o.total)}</td>
+      <td class="td-pago">${o.pago||'—'}</td>
+      <td class="td-items" style="font-size:.68rem;color:var(--muted)">${o.nota||''}</td>
     </tr>`
   })
   h+=`</table></div></div>`
@@ -1593,6 +1651,41 @@ function renderStats(){
 
   h+=`<button class="btn ghost" style="width:100%;margin-top:1rem;font-size:.6rem" onclick="if(confirm('¿Borrar todo el historial?')){localStorage.removeItem('sushi_hist_stats');renderStats()}">Limpiar historial estadísticas</button>`
   el.innerHTML=h
+}
+
+function exportarEstadisticasCSV(){
+  const ords = filtrarOrdsPeriodo(getHistStats())
+  if(!ords.length){ showToast('Sin órdenes para exportar'); return }
+  const SEP=';'
+  const cols=['Fecha','Hora','Cliente','Telefono','Direccion','Dpto','Localidad',
+    'Rolls (cant)','Nigiris (cant)','Items detalle','Subtotal','Envio','Total','Pago','Nota']
+  let csv = cols.join(SEP)+'\n'
+  const ordsSort=[...ords].sort((a,b)=>{
+    const ka=(a.fecha||'').split('/').reverse().join('')+(a.hora||'')
+    const kb=(b.fecha||'').split('/').reverse().join('')+(b.hora||'')
+    return kb.localeCompare(ka)
+  })
+  ordsSort.forEach(o=>{
+    const rollItems=ROLLS.map((r,i)=>(o.rq[i]>0?o.rq[i]+'x '+r.n:'')).filter(Boolean)
+    const nigItems=NIGIRIS.map((n,i)=>(o.nq[i]>0?o.nq[i]+'x '+n.n:'')).filter(Boolean)
+    const items=[...rollItems,...nigItems].join(' | ')
+    const totalRolls=ROLLS.reduce((a,_,i)=>a+(o.rq[i]||0),0)
+    const totalNigs=NIGIRIS.reduce((a,_,i)=>a+(o.nq[i]||0),0)
+    const sub=o.total-(o.envio||0)
+    const row=[
+      o.fecha||'', o.hora||'', o.cliente||'', o.tel||'',
+      (o.addr||'').replace(/;/g,','), o.dpto||'', o.localidad||'',
+      totalRolls, totalNigs, items,
+      sub, o.envio||0, o.total, o.pago||'', (o.nota||'').replace(/;/g,',')
+    ]
+    csv += row.join(SEP)+'\n'
+  })
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'})
+  const url=URL.createObjectURL(blob)
+  const a=document.createElement('a')
+  a.href=url; a.download='raco_ordenes_'+today().replace(/\//g,'-')+'.csv'; a.click()
+  URL.revokeObjectURL(url)
+  showToast('CSV exportado ✓')
 }
 
 // ── RUTA DEL DÍA ─────────────────────────────────────────────────
