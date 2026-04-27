@@ -480,6 +480,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
           <button class="cfiltro" onclick="filtrarCostos('rolls',this)">Rolls</button>
           <button class="cfiltro" onclick="filtrarCostos('nigiris',this)">Nigiris</button>
           <button class="cfiltro" onclick="filtrarCostos('salsas',this)">Salsas</button>
+          <button class="cfiltro" onclick="filtrarCostos('shari',this)">Shari</button>
         </div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
           <div style="display:flex;align-items:center;gap:.35rem;background:var(--surface);border:.5px solid var(--border);border-radius:5px;padding:.25rem .55rem">
@@ -1657,8 +1658,9 @@ function exportarEstadisticasCSV(){
   const ords = filtrarOrdsPeriodo(getHistStats())
   if(!ords.length){ showToast('Sin órdenes para exportar'); return }
   const SEP=';'
-  const cols=['Fecha','Hora','Cliente','Telefono','Direccion','Dpto','Localidad',
-    'Rolls (cant)','Nigiris (cant)','Items detalle','Subtotal','Envio','Total','Pago','Nota']
+  const cols=['Fecha','Hora','Orden ID','Cliente','Telefono','Direccion','Dpto',
+    'Tipo','Producto','Proteina','Cantidad','Precio unitario','Subtotal item',
+    'Envio','Total orden','Pago','Nota']
   let csv = cols.join(SEP)+'\n'
   const ordsSort=[...ords].sort((a,b)=>{
     const ka=(a.fecha||'').split('/').reverse().join('')+(a.hora||'')
@@ -1666,24 +1668,38 @@ function exportarEstadisticasCSV(){
     return kb.localeCompare(ka)
   })
   ordsSort.forEach(o=>{
-    const rollItems=ROLLS.map((r,i)=>(o.rq[i]>0?o.rq[i]+'x '+r.n:'')).filter(Boolean)
-    const nigItems=NIGIRIS.map((n,i)=>(o.nq[i]>0?o.nq[i]+'x '+n.n:'')).filter(Boolean)
-    const items=[...rollItems,...nigItems].join(' | ')
-    const totalRolls=ROLLS.reduce((a,_,i)=>a+(o.rq[i]||0),0)
-    const totalNigs=NIGIRIS.reduce((a,_,i)=>a+(o.nq[i]||0),0)
-    const sub=o.total-(o.envio||0)
-    const row=[
-      o.fecha||'', o.hora||'', o.cliente||'', o.tel||'',
-      (o.addr||'').replace(/;/g,','), o.dpto||'', o.localidad||'',
-      totalRolls, totalNigs, items,
-      sub, o.envio||0, o.total, o.pago||'', (o.nota||'').replace(/;/g,',')
+    const base = [
+      o.fecha||'', o.hora||'', o.id||'',
+      (o.cliente||'').replace(/;/g,','), o.tel||'',
+      (o.addrDisplay||o.addr||'').replace(/;/g,','), o.dpto||''
     ]
-    csv += row.join(SEP)+'\n'
+    let hasItems = false
+    // Rolls
+    ROLLS.forEach((r,i)=>{
+      const q=o.rq[i]||0; if(!q) return
+      hasItems=true
+      const precio=r.v||0
+      csv += [...base,'Roll',r.n.replace(/;/g,','),r.p||'',q,precio,precio*q,'','',o.pago||'',(o.nota||'').replace(/;/g,',')].join(SEP)+'\n'
+    })
+    // Nigiris
+    NIGIRIS.forEach((n,i)=>{
+      const q=o.nq[i]||0; if(!q) return
+      hasItems=true
+      const precio=n.v||0
+      csv += [...base,'Nigiri',n.n.replace(/;/g,','),n.p||'',q,precio,precio*q,'','',o.pago||'',(o.nota||'').replace(/;/g,',')].join(SEP)+'\n'
+    })
+    // Envio as separate line
+    if(o.envio>0){
+      csv += [...base,'Envío','Envío','',1,o.envio,o.envio,o.envio,o.total,o.pago||'',(o.nota||'').replace(/;/g,',')].join(SEP)+'\n'
+    } else if(!hasItems){
+      // Empty order fallback
+      csv += [...base,'—','—','',0,0,0,0,o.total,o.pago||'',(o.nota||'').replace(/;/g,',')].join(SEP)+'\n'
+    }
   })
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'})
   const url=URL.createObjectURL(blob)
   const a=document.createElement('a')
-  a.href=url; a.download='raco_ordenes_'+today().replace(/\//g,'-')+'.csv'; a.click()
+  a.href=url; a.download='raco_items_'+today().replace(/\//g,'-')+'.csv'; a.click()
   URL.revokeObjectURL(url)
   showToast('CSV exportado ✓')
 }
@@ -1940,26 +1956,51 @@ function getP(key){
   return s !== null ? parseFloat(s) : (INSUMOS_BASE[key]?.pg || 0)
 }
 
+// SHARI — receta base editable
+let RECETA_SHARI = {
+  n: 'Shari (arroz para sushi)',
+  rendimiento: 15,  // rolls por batch
+  rendimiento_n: 24, // nigiris por batch (15 rolls x 8 pzas / 5 pzas por nigiri aprox)
+  ingredientes: [
+    {k:'arroz',   g:1000, desc:'Arroz Kometo (seco)'},
+    {k:'vinagre', g:250,  desc:'Vinagre de arroz'},
+    {k:'azucar',  g:70,   desc:'Azúcar'},
+    {k:'mirin',   g:100,  desc:'Mirin'},
+    {k:'sal',     g:40,   desc:'Sal fina'},
+  ]
+}
+// Load saved shari from localStorage
+;(()=>{
+  const s = localStorage.getItem('raco_shari_custom')
+  if(s){ try{ RECETA_SHARI = JSON.parse(s) }catch(e){} }
+})()
+
 // SHARI cost per roll (120g cocido)
 function shariCosto(){
-  const batchCosto = 1000*getP('arroz') + 250*getP('vinagre') + 70*getP('azucar') + 100*getP('mirin') + 40*getP('sal')
-  return batchCosto / 15 // 15 rolls per batch
+  const batchCosto = RECETA_SHARI.ingredientes.reduce((a, ing)=> a + getP(ing.k)*ing.g, 0)
+  return batchCosto / RECETA_SHARI.rendimiento
+}
+function shariCostoPorNigiri(){
+  const batchCosto = RECETA_SHARI.ingredientes.reduce((a, ing)=> a + getP(ing.k)*ing.g, 0)
+  return batchCosto / (RECETA_SHARI.rendimiento_n || RECETA_SHARI.rendimiento * 8)
 }
 
 // SALSAS — retorna costo por g
-function salsaCostoG(salsa){
-  const p = (k) => getP(k)
-  switch(salsa){
-    case 'aji':     return (65*p('kewpie')+30*p('aji_pasta')+3*p('lima')+1.5*p('soja')+0.5*p('sesamo_ac'))/100
-    case 'chalaqui':return (60*p('cebolla')+15*p('aji_pasta')+15*p('lima')+5*p('cilantro')+3*p('oliva')+2*p('pimienta'))/100
-    case 'rocoto':  return (55*p('kewpie')+35*p('rocoto_pasta')+1.5*p('ajo')+0.5*p('cebollino')+2*p('vinagre')+3*p('galleta')+3*p('qfresco'))/100
-    case 'marac':   return (30*p('maracuya')+20*p('azucar_r')+6*p('soja')+3*p('vinagre')+1*p('maicena'))/100
-    case 'kimchi':  return (70*p('kewpie')+20*p('gochujang')+5*p('soja')+2*p('sesamo_ac')+2*p('miel')+1*p('sriracha'))/100
-    case 'acevich': return (60*p('kewpie')+25*p('aji_pasta')+7*p('lima')+3*p('lima')+1*p('soja')+0.5*p('sesamo_ac')+0.5*p('hondashi'))/100
-    case 'spicy':   return (70*p('kewpie')+25*p('sriracha')+3*p('lima')+2*p('sesamo_ac'))/100
-    case 'furik':   return (50*p('mani')+15*p('almendras')+10*p('nueces')+15*p('sesamo_n')+10*p('panko'))/90
-    default: return 0
-  }
+// salsaCostoG: costo por gramo de salsa, siempre calculado desde RECETAS_SALSAS
+// Lógica: suma(precio * gramos de cada ingrediente) / batch total en gramos
+function salsaCostoG(salsaKey){
+  const salsa = RECETAS_SALSAS.find(s =>
+    s.k === salsaKey ||
+    s.k === 'salsa_'+salsaKey ||
+    s.n.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_') === salsaKey
+  )
+  if(!salsa || !salsa.batch) return 0
+  const batchCosto = salsa.ingredientes.reduce((acc, ing) => {
+    const k = ing.k || ing[0]
+    const g = ing.g || ing[1] || 0
+    return acc + (INSUMOS_BASE[k] ? getP(k) * g : 0)
+  }, 0)
+  return batchCosto / salsa.batch  // $ por gramo
 }
 
 // ── RECETAS (gramos por ingrediente) ─────────────────────────
@@ -2151,22 +2192,9 @@ function costoIng(k, g){
   if(k === 'shari')   return shariCosto()
   if(k === 'shari_n') return shariCosto() * (15/120)
   if(k.startsWith('salsa_')){
+    // salsaCostoG is now fully dynamic — always looks up RECETAS_SALSAS
     const salsaKey = k.replace('salsa_','')
-    // First try hardcoded switch
-    const hardcoded = salsaCostoG(salsaKey)
-    if(hardcoded > 0) return hardcoded * g
-    // Then look in RECETAS_SALSAS dynamically (for custom salsas from CSV)
-    const salsa = RECETAS_SALSAS.find(s => s.k === k || s.k === salsaKey || 
-      s.n.toLowerCase().replace(/[^a-z0-9]/g,'_') === salsaKey ||
-      s.n.toLowerCase().replace(/\s+/g,'_') === salsaKey)
-    if(salsa && salsa.batch > 0){
-      const batchCosto = salsa.ingredientes.reduce((acc, ing)=>{
-        const ik = ing.k || ing[0], ig = ing.g || ing[1] || 0
-        return acc + (INSUMOS_BASE[ik] ? getP(ik)*ig : 0)
-      }, 0)
-      return (batchCosto / salsa.batch) * g
-    }
-    return 0
+    return salsaCostoG(salsaKey) * g
   }
   if(INSUMOS_BASE[k]) return getP(k) * g
   return 0
@@ -2197,8 +2225,8 @@ function filtrarCostos(f, btn){
   if(!saved) return
   try {
     const {rolls, nigiris, salsas} = JSON.parse(saved)
-    if(rolls?.length)  RECETAS_ROLLS  = rolls.map(r=>({...r}))
-    if(nigiris?.length) RECETAS_NIGIRIS = nigiris.map(r=>({...r}))
+    if(rolls?.length)  RECETAS_ROLLS  = rolls.map(r=>({...r, p:r.p||'', desc:r.desc||'', spicy:r.spicy||0}))
+    if(nigiris?.length) RECETAS_NIGIRIS = nigiris.map(r=>({...r, p:r.p||'', desc:r.desc||'', spicy:r.spicy||0}))
     if(salsas?.length)  RECETAS_SALSAS  = salsas.map(s=>({...s}))
     // Also sync ROLLS/NIGIRIS for orders panel
     if(rolls?.length){
@@ -2349,6 +2377,58 @@ function renderCostos(){
     html += `<div class="slabel" style="margin-top:1.25rem">Nigiris</div>`
     RECETAS_NIGIRIS.forEach(r => renderCard(r,'nigiri'))
   }
+  if(costosFiltro==='todos'||costosFiltro==='shari'){
+    const batchCosto = RECETA_SHARI.ingredientes.reduce((a,ing)=>a+costoIng(ing.k,ing.g),0)
+    const costoPorRoll = batchCosto / RECETA_SHARI.rendimiento
+    const costoPorNig  = batchCosto / (RECETA_SHARI.rendimiento_n || RECETA_SHARI.rendimiento*8)
+    const shariId = 'cc_shari_base'
+    html += `<div class="slabel" style="margin-top:${costosFiltro==='shari'?'0':'1.25rem'}">Shari</div>
+    <div class="costo-card" id="card_shari">
+      <div class="costo-header" onclick="toggleCostoBody('${shariId}')">
+        <div>
+          <span class="costo-nombre">${RECETA_SHARI.n}</span>
+          <span style="font-family:var(--mono);font-size:.6rem;color:var(--muted);margin-left:.5rem">Batch → ${RECETA_SHARI.rendimiento} rolls · ${RECETA_SHARI.rendimiento_n||RECETA_SHARI.rendimiento*8} nigiris</span>
+        </div>
+        <div class="costo-badges">
+          <span style="font-family:var(--mono);font-size:.7rem;color:var(--dim)">Roll ${money(costoPorRoll)} · Nig ${money(costoPorNig)}</span>
+          <span style="font-family:var(--mono);font-size:.6rem;color:var(--muted)">▾</span>
+        </div>
+      </div>
+      <div class="costo-body" id="${shariId}">
+        <div style="display:flex;gap:1rem;margin-bottom:.75rem;padding:.4rem 0;border-bottom:.5px solid var(--border2)">
+          <div style="display:flex;flex-direction:column;gap:.2rem;flex:1">
+            <span style="font-size:.7rem;color:var(--muted)">Rendimiento por batch</span>
+            <div style="display:flex;gap:.75rem;align-items:center">
+              <label style="font-size:.72rem;color:var(--dim)">Rolls</label>
+              <input type="number" min="1" value="${RECETA_SHARI.rendimiento}" style="${INP_STYLE};width:52px"
+                oninput="RECETA_SHARI.rendimiento=+this.value;guardarShari();recalcShariCard()">
+              <label style="font-size:.72rem;color:var(--dim)">Nigiris</label>
+              <input type="number" min="1" value="${RECETA_SHARI.rendimiento_n||RECETA_SHARI.rendimiento*8}" style="${INP_STYLE};width:52px"
+                oninput="RECETA_SHARI.rendimiento_n=+this.value;guardarShari();recalcShariCard()">
+            </div>
+          </div>
+        </div>`
+    RECETA_SHARI.ingredientes.forEach((ing,idx)=>{
+      const c = costoIng(ing.k, ing.g)
+      html += `<div class="costo-row ing-row" data-k="${ing.k}">
+        <span class="costo-ing">${ing.desc}</span>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <input class="ing-g-inp" type="number" step="1" value="${ing.g}" style="${INP_STYLE}"
+            oninput="RECETA_SHARI.ingredientes[${idx}].g=+this.value;guardarShari();recalcShariCard()"
+            onfocus="this.style.borderColor='var(--accent2)'" onblur="this.style.borderColor='var(--border2)'">
+          <span style="font-family:var(--mono);font-size:.62rem;color:var(--muted);min-width:14px">g</span>
+          <span class="ing-cost costo-val" id="shari-ing-cost-${idx}">${money(c)}</span>
+        </div>
+      </div>`
+    })
+    html += `<div class="costo-total-row" id="shari-total-row">
+        <span class="costo-total-lbl">Costo batch · por roll / por nigiri</span>
+        <span class="costo-total-val" id="shari-total">${money(batchCosto)} → ${money(costoPorRoll)} / ${money(costoPorNig)}</span>
+      </div>
+      </div>
+    </div>`
+  }
+
   if(costosFiltro==='todos'||costosFiltro==='salsas'){
     html += `<div class="slabel" style="margin-top:1.25rem">Salsas</div>`
     RECETAS_SALSAS.forEach(s => {
@@ -2395,6 +2475,22 @@ function renderCostos(){
 function toggleCostoBody(id){
   const el = document.getElementById(id)
   if(el) el.classList.toggle('open')
+}
+
+function guardarShari(){
+  localStorage.setItem('raco_shari_custom', JSON.stringify(RECETA_SHARI))
+}
+
+function recalcShariCard(){
+  const batchCosto = RECETA_SHARI.ingredientes.reduce((a,ing)=>a+costoIng(ing.k,ing.g),0)
+  const r = RECETA_SHARI.rendimiento||15
+  const n = RECETA_SHARI.rendimiento_n||(r*8)
+  RECETA_SHARI.ingredientes.forEach((ing,idx)=>{
+    const el = document.getElementById('shari-ing-cost-'+idx)
+    if(el) el.textContent = money(costoIng(ing.k,ing.g))
+  })
+  const tot = document.getElementById('shari-total')
+  if(tot) tot.textContent = money(batchCosto)+' → '+money(batchCosto/r)+' / '+money(batchCosto/n)
 }
 
 // ── RENDER INSUMOS ────────────────────────────────────────────
@@ -2864,13 +2960,17 @@ function exportarRecetasCSV(){
   const SEP = ';'
   const allRecs = [...RECETAS_ROLLS,...RECETAS_NIGIRIS,...RECETAS_SALSAS.map(s=>({...s,ingredientes:s.ingredientes.map(i=>({k:i.k||i[0],g:i.g||i[1]||0,desc:INSUMOS_BASE[i.k||i[0]]?.n||i.k||i[0]}))}))]
   const maxIng = Math.max(...allRecs.map(r=>r.ingredientes.length))
-  let hdr = ['tipo','nombre','precio_venta']
+  // Now includes proteina, descripcion, spicy columns
+  let hdr = ['tipo','nombre','precio_venta','proteina','descripcion','spicy']
   for(let i=1;i<=maxIng;i++) hdr.push(`ingrediente${i}`,`gramos${i}`)
   let csv = hdr.join(SEP) + '\n'
 
   const exportRec = (rec, tipo) => {
     const pv = tipo==='salsa' ? rec.batch : getRec(tipo, rec.n, 'pv', rec.pv)
-    const cols = [tipo, rec.n, pv]
+    const prot = rec.p || rec.proteina || ''
+    const desc = (rec.desc || rec.descripcion || '').replace(/;/g,',')
+    const spicy = rec.spicy || 0
+    const cols = [tipo, rec.n, pv, prot, desc, spicy]
     rec.ingredientes.forEach(ing => cols.push(ing.k||ing[0], ing.g||ing[1]||0))
     while(cols.length < hdr.length) cols.push('')
     csv += cols.join(SEP) + '\n'
@@ -2878,6 +2978,11 @@ function exportarRecetasCSV(){
   RECETAS_ROLLS.forEach(r=>exportRec(r,'roll'))
   RECETAS_NIGIRIS.forEach(r=>exportRec(r,'nigiri'))
   RECETAS_SALSAS.forEach(r=>exportRec(r,'salsa'))
+  // Shari as special type
+  const shariCols = ['shari', RECETA_SHARI.n, RECETA_SHARI.rendimiento, '', '', 0]
+  RECETA_SHARI.ingredientes.forEach(ing=>shariCols.push(ing.k, ing.g))
+  while(shariCols.length < hdr.length) shariCols.push('')
+  csv += shariCols.join(SEP) + '\n'
 
   const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'})
   const url = URL.createObjectURL(blob)
@@ -2891,14 +2996,12 @@ function importarRecetasCSV(input){
   const file = input.files[0]; if(!file) return
   const reader = new FileReader()
   reader.onload = e => {
-    const text = e.target.result.replace(/^\uFEFF/,'') // strip BOM
+    const text = e.target.result.replace(/^\uFEFF/,'')
     const lines = text.split('\n').filter(l=>l.trim())
-    // Auto-detect separator
-    const firstLine = lines[0]
-    const SEP = firstLine.includes(';') ? ';' : ','
-    let updated=0, added=0
-
-    // Parse ALL rows first, then replace arrays entirely
+    const SEP = lines[0].includes(';') ? ';' : ','
+    const header = lines[0].split(SEP).map(h=>h.trim().toLowerCase())
+    // Detect if new format (has proteina col) or old format
+    const hasMetaCols = header.includes('proteina') || header.indexOf('proteina')>=3
     const newRolls = [], newNigiris = [], newSalsas = []
 
     lines.slice(1).forEach(line => {
@@ -2908,44 +3011,55 @@ function importarRecetasCSV(input){
       const pv     = parseFloat(parts[2])
       if(!tipo||!nombre||isNaN(pv)) return
 
+      // Parse meta columns if present
+      let ingStart = 3
+      let prot = '', desc = '', spicy = 0
+      if(hasMetaCols && parts.length > 6){
+        prot  = parts[3] || ''
+        desc  = parts[4] || ''
+        spicy = parseInt(parts[5]) || 0
+        ingStart = 6
+      }
+
       const ings = []
-      for(let i=3;i<parts.length-1;i+=2){
+      for(let i=ingStart;i<parts.length-1;i+=2){
         const k=parts[i]?.trim(), g=parseFloat(parts[i+1])
         if(k&&k!==''&&!isNaN(g)&&g>0){
-          const desc = INSUMOS_BASE[k]?.n || k
-          ings.push({k, g, desc})
+          const descIng = INSUMOS_BASE[k]?.n || k
+          ings.push({k, g, desc:descIng})
         }
       }
       if(!ings.length) return
 
-      // Preserve any saved price from localStorage if not in CSV
       localStorage.setItem('raco_rec_'+tipo+'_'+nombre.replace(/[^a-zA-Z0-9]/g,'_')+'_pv', pv)
 
-      if(tipo==='roll') newRolls.push({n:nombre, pv, ingredientes:ings})
-      else if(tipo==='nigiri') newNigiris.push({n:nombre, pv, ingredientes:ings})
+      if(tipo==='roll') newRolls.push({n:nombre, pv, p:prot, desc, spicy, ingredientes:ings})
+      else if(tipo==='nigiri') newNigiris.push({n:nombre, pv, p:prot, desc, spicy, ingredientes:ings})
       else if(tipo==='salsa'){
-        // Try to preserve k, usoRoll, usoNig from existing salsa
         const existing = RECETAS_SALSAS.find(s=>s.n===nombre)
         newSalsas.push({
           n:nombre,
           k: existing?.k || nombre.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_'),
-          batch: pv,
-          usoRoll: existing?.usoRoll || 10,
-          usoNig:  existing?.usoNig  || 5,
+          batch: pv, usoRoll: existing?.usoRoll||10, usoNig: existing?.usoNig||5,
           ingredientes: ings
         })
+      } else if(tipo==='shari'){
+        if(ings.length){
+          RECETA_SHARI.n = nombre
+          RECETA_SHARI.rendimiento = pv  // pv column holds rendimiento for shari
+          RECETA_SHARI.ingredientes = ings
+          guardarShari()
+        }
       }
     })
 
-    // Replace arrays entirely
     if(newRolls.length){   RECETAS_ROLLS.length=0;   newRolls.forEach(r=>RECETAS_ROLLS.push(r)) }
     if(newNigiris.length){ RECETAS_NIGIRIS.length=0; newNigiris.forEach(r=>RECETAS_NIGIRIS.push(r)) }
     if(newSalsas.length){  RECETAS_SALSAS.length=0;  newSalsas.forEach(s=>RECETAS_SALSAS.push(s)) }
 
-    // Persist to localStorage
     localStorage.setItem('raco_recetas_custom', JSON.stringify({
-      rolls:   RECETAS_ROLLS.map(r=>({n:r.n, pv:r.pv, ingredientes:r.ingredientes})),
-      nigiris: RECETAS_NIGIRIS.map(r=>({n:r.n, pv:r.pv, ingredientes:r.ingredientes})),
+      rolls:   RECETAS_ROLLS.map(r=>({n:r.n, pv:r.pv, p:r.p||'', desc:r.desc||'', spicy:r.spicy||0, ingredientes:r.ingredientes})),
+      nigiris: RECETAS_NIGIRIS.map(r=>({n:r.n, pv:r.pv, p:r.p||'', desc:r.desc||'', spicy:r.spicy||0, ingredientes:r.ingredientes})),
       salsas:  RECETAS_SALSAS.map(s=>({n:s.n, k:s.k, batch:s.batch, usoRoll:s.usoRoll, usoNig:s.usoNig, ingredientes:s.ingredientes}))
     }))
 
@@ -2961,15 +3075,19 @@ function importarRecetasCSV(input){
   reader.readAsText(file)
 }
 
-// Sync all price overrides so menu.html picks them up
+// Sync prices + menu data so menu.html picks them up
 function syncPreciosMenu(){
+  const menuData = {
+    rolls: RECETAS_ROLLS.map(r=>({n:r.n, wa:r.n, p:r.p||'', desc:r.desc||'', spicy:r.spicy||0, v:getRec('roll',r.n,'pv',r.pv)})),
+    nigiris: RECETAS_NIGIRIS.map(r=>({n:r.n, wa:r.n, p:r.p||'', desc:r.desc||'', spicy:r.spicy||0, v:getRec('nigiri',r.n,'pv',r.pv)}))
+  }
+  localStorage.setItem('raco_menu_data', JSON.stringify(menuData))
+  // Also individual price keys for backward compat
   RECETAS_ROLLS.forEach(r=>{
-    const pv = getRec('roll', r.n, 'pv', r.pv)
-    localStorage.setItem('raco_rec_roll_'+r.n.replace(/[^a-zA-Z0-9]/g,'_')+'_pv', pv)
+    localStorage.setItem('raco_rec_roll_'+r.n.replace(/[^a-zA-Z0-9]/g,'_')+'_pv', getRec('roll',r.n,'pv',r.pv))
   })
   RECETAS_NIGIRIS.forEach(r=>{
-    const pv = getRec('nigiri', r.n, 'pv', r.pv)
-    localStorage.setItem('raco_rec_nigiri_'+r.n.replace(/[^a-zA-Z0-9]/g,'_')+'_pv', pv)
+    localStorage.setItem('raco_rec_nigiri_'+r.n.replace(/[^a-zA-Z0-9]/g,'_')+'_pv', getRec('nigiri',r.n,'pv',r.pv))
   })
 }
 

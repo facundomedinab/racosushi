@@ -388,27 +388,49 @@ const NIGIRIS_BASE=[
 // Apply saved prices and custom recipes from admin
 let ROLLS, NIGIRIS
 ;(()=>{
-  const saved = localStorage.getItem('raco_recetas_custom')
-  if(saved){
+  // Priority 1: full menu data synced from admin (includes desc, proteina, spicy)
+  const menuData = localStorage.getItem('raco_menu_data')
+  if(menuData){
     try {
-      const {rolls, nigiris} = JSON.parse(saved)
+      const {rolls, nigiris} = JSON.parse(menuData)
       if(rolls?.length){
-        ROLLS = rolls.map(r=>({n:r.n, wa:r.n, p:'', v:r.pv, spicy:0, desc:''}))
-        // Try to merge desc/spicy from base
-        ROLLS = ROLLS.map(r=>{
-          const base = ROLLS_BASE.find(b=>b.n===r.n||b.wa===r.n)
-          return base ? {...r, desc:base.desc, spicy:base.spicy, p:base.p} : r
-        })
+        ROLLS = rolls.map(r=>({
+          n:r.n, wa:r.wa||r.n, p:r.p||'', v:r.v||r.pv||0,
+          spicy:r.spicy||0, desc:r.desc||''
+        }))
       }
       if(nigiris?.length){
-        NIGIRIS = nigiris.map(r=>({n:r.n, wa:r.n, p:'', v:r.pv, spicy:0, desc:''}))
-        NIGIRIS = NIGIRIS.map(r=>{
-          const base = NIGIRIS_BASE.find(b=>b.n===r.n||b.wa===r.n)
-          return base ? {...r, desc:base.desc, spicy:base.spicy, p:base.p} : r
-        })
+        NIGIRIS = nigiris.map(r=>({
+          n:r.n, wa:r.wa||r.n, p:r.p||'', v:r.v||r.pv||0,
+          spicy:r.spicy||0, desc:r.desc||''
+        }))
       }
     } catch(e){}
   }
+  // Priority 2: recetas_custom (older format, merge desc from base)
+  if(!ROLLS){
+    const saved = localStorage.getItem('raco_recetas_custom')
+    if(saved){
+      try {
+        const {rolls, nigiris} = JSON.parse(saved)
+        if(rolls?.length){
+          ROLLS = rolls.map(r=>{
+            const base = ROLLS_BASE.find(b=>b.n===r.n||b.wa===r.n)
+            return {n:r.n, wa:r.n, p:r.p||base?.p||'', v:r.pv||r.v||0,
+              spicy:r.spicy||base?.spicy||0, desc:r.desc||base?.desc||''}
+          })
+        }
+        if(nigiris?.length){
+          NIGIRIS = nigiris.map(r=>{
+            const base = NIGIRIS_BASE.find(b=>b.n===r.n||b.wa===r.n)
+            return {n:r.n, wa:r.n, p:r.p||base?.p||'', v:r.pv||r.v||0,
+              spicy:r.spicy||base?.spicy||0, desc:r.desc||base?.desc||''}
+          })
+        }
+      } catch(e){}
+    }
+  }
+  // Fallback: base arrays with individual price overrides
   if(!ROLLS)  ROLLS  = ROLLS_BASE.map(r=>({...r, v:getPV('roll', r.n, r.v)}))
   if(!NIGIRIS) NIGIRIS = NIGIRIS_BASE.map(n=>({...n, v:getPV('nigiri', n.n, n.v)}))
 })()
