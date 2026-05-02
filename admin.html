@@ -1996,7 +1996,9 @@ function salsaCostoG(salsaKey){
   const salsa = RECETAS_SALSAS.find(s =>
     s.k === salsaKey ||
     s.k === 'salsa_'+salsaKey ||
-    s.n.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_') === salsaKey
+    s.k.replace(/^salsa_/,'') === salsaKey ||
+    s.n.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_') === salsaKey ||
+    s.n.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_') === 'salsa_'+salsaKey
   )
   if(!salsa) return 0
   const batchCosto = salsa.ingredientes.reduce((acc, ing) => {
@@ -2197,8 +2199,8 @@ function costoIng(k, g){
   if(k === 'shari')   return shariCostoPorGramo() * g
   if(k === 'shari_n') return shariCostoPorGramo() * g
   if(k.startsWith('salsa_')){
-    // salsaCostoG is now fully dynamic — always looks up RECETAS_SALSAS
-    const salsaKey = k.replace('salsa_','')
+    // Remove salsa_ prefix — handle both salsa_aji and salsa_salsa_thai
+    let salsaKey = k.replace(/^salsa_salsa_/,'salsa_').replace(/^salsa_/,'')
     return salsaCostoG(salsaKey) * g
   }
   if(INSUMOS_BASE[k]) return getP(k) * g
@@ -3023,7 +3025,8 @@ function exportarRecetasCSV(){
   const allRecs = [...RECETAS_ROLLS,...RECETAS_NIGIRIS,...RECETAS_SALSAS.map(s=>({...s,ingredientes:s.ingredientes.map(i=>({k:i.k||i[0],g:i.g||i[1]||0,desc:INSUMOS_BASE[i.k||i[0]]?.n||i.k||i[0]}))}))]
   const maxIng = Math.max(...allRecs.map(r=>r.ingredientes.length))
   // Now includes proteina, descripcion, spicy columns
-  let hdr = ['tipo','nombre','precio_venta','proteina','descripcion','spicy']
+  // key column added — for salsas shows the key to use in recipes (salsa_KEY)
+  let hdr = ['tipo','nombre','precio_venta','proteina','descripcion','spicy','key']
   for(let i=1;i<=maxIng;i++) hdr.push(`ingrediente${i}`,`gramos${i}`)
   let csv = hdr.join(SEP) + '\n'
 
@@ -3032,7 +3035,9 @@ function exportarRecetasCSV(){
     const prot = rec.p || rec.proteina || ''
     const desc = (rec.desc || rec.descripcion || '').replace(/;/g,',')
     const spicy = rec.spicy || 0
-    const cols = [tipo, rec.n, pv, prot, desc, spicy]
+    // For salsas, show the key so user knows what to write in roll recipes
+    const recKey = tipo==='salsa' ? (rec.k||'') : ''
+    const cols = [tipo, rec.n, pv, prot, desc, spicy, recKey]
     rec.ingredientes.forEach(ing => cols.push(ing.k||ing[0], ing.g||ing[1]||0))
     while(cols.length < hdr.length) cols.push('')
     csv += cols.join(SEP) + '\n'
@@ -3062,25 +3067,32 @@ function importarRecetasCSV(input){
     const lines = text.split('\n').filter(l=>l.trim())
     const SEP = lines[0].includes(';') ? ';' : ','
     const header = lines[0].split(SEP).map(h=>h.trim().toLowerCase())
-    // Detect if new format (has proteina col) or old format
+    // Detect format: has proteina col, and optionally key col
     const hasMetaCols = header.includes('proteina') || header.indexOf('proteina')>=3
+    const hasKeyCol   = header.includes('key')
+    const keyColIdx   = header.indexOf('key')  // typically 6
     const newRolls = [], newNigiris = [], newSalsas = []
 
     lines.slice(1).forEach(line => {
       const parts = line.split(SEP).map(p=>p.trim())
-      const tipo   = parts[0]
+      const tipo   = parts[0].toLowerCase().trim()
       const nombre = parts[1]
       const pv     = parseFloat(parts[2])
       if(!tipo||!nombre||isNaN(pv)) return
 
       // Parse meta columns if present
       let ingStart = 3
-      let prot = '', desc = '', spicy = 0
-      if(hasMetaCols && parts.length > 6){
+      let prot = '', desc = '', spicy = 0, csvSalsaKey = ''
+      if(hasMetaCols && parts.length > 5){
         prot  = parts[3] || ''
         desc  = parts[4] || ''
         spicy = parseInt(parts[5]) || 0
         ingStart = 6
+        // key col at index 6 — shift ingredients to start at 7
+        if(hasKeyCol && keyColIdx === 6){
+          csvSalsaKey = parts[6] || ''
+          ingStart = 7
+        }
       }
 
       const ings = []
@@ -3098,10 +3110,12 @@ function importarRecetasCSV(input){
       if(tipo==='roll') newRolls.push({n:nombre, pv, p:prot, desc, spicy, ingredientes:ings})
       else if(tipo==='nigiri') newNigiris.push({n:nombre, pv, p:prot, desc, spicy, ingredientes:ings})
       else if(tipo==='salsa'){
-        const existing = RECETAS_SALSAS.find(s=>s.n===nombre)
+        const existing = RECETAS_SALSAS.find(s=>s.n===nombre||s.k===csvSalsaKey)
+        // Use key from CSV if provided, else from existing, else generate from name
+        const salsaK = csvSalsaKey || existing?.k || nombre.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_')
         newSalsas.push({
           n:nombre,
-          k: existing?.k || nombre.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_'),
+          k: salsaK,
           batch: pv, usoRoll: existing?.usoRoll||10, usoNig: existing?.usoNig||5,
           ingredientes: ings
         })
