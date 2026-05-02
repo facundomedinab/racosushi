@@ -2440,7 +2440,7 @@ function renderCostos(){
       const cNig  = realBatchG > 0 ? (cBatch/realBatchG) * s.usoNig  : 0
       const id = 'cc_salsa_'+s.k
       const cpgSalsa = realBatchG > 0 ? cBatch/realBatchG : 0
-      html += `<div class="costo-card">
+      html += `<div class="costo-card" id="card_salsa_${s.k}">
         <div class="costo-header" onclick="toggleCostoBody('${id}')">
           <span class="costo-nombre">${s.n}</span>
           <div class="costo-badges">
@@ -2450,16 +2450,19 @@ function renderCostos(){
           </div>
         </div>
         <div class="costo-body" id="${id}">`
-      s.ingredientes.forEach(ing => {
+      s.ingredientes.forEach((ing, idx) => {
         const g = ing.g || 0
         const k = ing.k || ing[0]
         const n = INSUMOS_BASE[k]?.n || k
         const c = INSUMOS_BASE[k] ? getP(k)*g : 0
-        html += `<div class="costo-row">
+        html += `<div class="costo-row ing-row" data-k="${k}" data-idx="${idx}" data-salsa="${s.k}">
           <span class="costo-ing">${n}</span>
-          <div style="display:flex;align-items:center;gap:.5rem">
-            <span class="costo-g">${g}g</span>
-            <span class="costo-val">${money(c)}</span>
+          <div style="display:flex;align-items:center;gap:.4rem">
+            <input class="ing-g-inp" type="number" step="1" value="${g}" style="${INP_STYLE}"
+              oninput="updateSalsaIng('${s.k}',${idx},+this.value)"
+              onfocus="this.style.borderColor='var(--accent2)'" onblur="this.style.borderColor='var(--border2)'">
+            <span style="font-family:var(--mono);font-size:.62rem;color:var(--muted);min-width:14px">g</span>
+            <span class="ing-cost costo-val" id="salsa-ing-${s.k}-${idx}">${money(c)}</span>
           </div>
         </div>`
       })
@@ -2480,6 +2483,32 @@ function renderCostos(){
 function toggleCostoBody(id){
   const el = document.getElementById(id)
   if(el) el.classList.toggle('open')
+}
+
+function updateSalsaIng(salsaKey, idx, newG){
+  const salsa = RECETAS_SALSAS.find(s=>s.k===salsaKey)
+  if(!salsa) return
+  salsa.ingredientes[idx].g = newG
+  // Recalc display
+  const k = salsa.ingredientes[idx].k
+  const c = INSUMOS_BASE[k] ? getP(k)*newG : 0
+  const costEl = document.getElementById('salsa-ing-'+salsaKey+'-'+idx)
+  if(costEl) costEl.textContent = money(c)
+  // Recalc header and total
+  const batchCosto = salsa.ingredientes.reduce((a,ing)=>a+costoIng(ing.k,ing.g),0)
+  const realG = salsa.ingredientes.reduce((a,ing)=>a+(ing.g||0),0)
+  const cpg = realG>0 ? batchCosto/realG : 0
+  const card = document.getElementById('card_salsa_'+salsaKey)
+  if(card){
+    const badge = card.querySelector('.costo-badges span')
+    if(badge) badge.textContent = cpg.toFixed(2)+' $/g · Roll '+money(Math.round(cpg*salsa.usoRoll))+' · Nig '+money(Math.round(cpg*salsa.usoNig))
+  }
+  // Persist to localStorage
+  localStorage.setItem('raco_recetas_custom', JSON.stringify({
+    rolls:   RECETAS_ROLLS.map(r=>({n:r.n, pv:r.pv, p:r.p||'', desc:r.desc||'', spicy:r.spicy||0, ingredientes:r.ingredientes})),
+    nigiris: RECETAS_NIGIRIS.map(r=>({n:r.n, pv:r.pv, p:r.p||'', desc:r.desc||'', spicy:r.spicy||0, ingredientes:r.ingredientes})),
+    salsas:  RECETAS_SALSAS.map(s=>({n:s.n, k:s.k, batch:s.batch, usoRoll:s.usoRoll, usoNig:s.usoNig, ingredientes:s.ingredientes}))
+  }))
 }
 
 function guardarShari(){
