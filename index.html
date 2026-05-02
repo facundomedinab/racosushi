@@ -617,4 +617,11 @@ function enviarConsultaEvento(){
 }
 </script>
 </body>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    reg.update()
+  })
+}
+</script>
 </html>

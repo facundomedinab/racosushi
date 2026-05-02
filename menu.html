@@ -379,28 +379,29 @@ function getPV(tipo, nombre, base){
 }
 
 const ROLLS_BASE=[
-  {n:'NY Phila',       wa:'NY Phila',       p:'Salmon',      v:10000,spicy:0,desc:'Salmón, queso crema, palta, sésamo'},
-  {n:'Salmón · Palta', wa:'Salmon Palta',   p:'Salmon',      v:10000,spicy:0,desc:'Salmón, palta, sésamo negro'},
-  {n:'Maracuyá',       wa:'Maracuya',       p:'Trucha',      v:13000,spicy:0,desc:'Trucha, palta, salsa agridulce de maracuyá, masa filo crocante'},
-  {n:'Ají Roll',       wa:'Aji Roll',       p:'Trucha',      v:13000,spicy:0,desc:'Trucha, palta, salsa ají amarillo nikkei, hilos de cebolla crocante'},
-  {n:'Spicy Trucha 🌶',wa:'Spicy Trucha',   p:'Trucha',      v:13000,spicy:1,desc:'Trucha, palta, spicy mayo nikkei, quinoa crocante'},
-  {n:'Krein',          wa:'Krein',          p:'Pesca blanca', v:13000,spicy:0,desc:'Tartar de pesca blanca, negui, migas de tempura'},
-  {n:'Acevichado',     wa:'Acevichado',     p:'Pesca blanca', v:13000,spicy:0,desc:'Pesca blanca, palta, salsa acevichada nikkei, maíz crocante'},
-  {n:'Shiro',          wa:'Shiro',          p:'Pesca blanca', v:13000,spicy:0,desc:'Pesca blanca, crema de palta, salsa miso, cebollín'},
-  {n:'Ebi Furai',      wa:'Ebi Furai',      p:'Langostino',  v:10000,spicy:0,desc:'Langostino apanado en panko, queso crema, palta'},
-  {n:'Rocoto Lango 🌶',wa:'Rocoto Lango',   p:'Langostino',  v:13000,spicy:1,desc:'Langostino apanado en panko, rocoto mayo, ralladura de limón'},
-  {n:'Kimchi Lango',   wa:'Kimchi Lango',   p:'Langostino',  v:13000,spicy:0,desc:'Langostino apanado en panko, queso crema, kimchi mayo, furikake de frutos secos'},
+  {n:'Ebi Furai',      wa:'Ebi Furai',      p:'Langostino',  v:10000,spicy:0,desc:'Langostino apanado en panko, queso crema, palta, sesamo.'},
+  {n:'Rocoto Lango 🌶',wa:'Rocoto Lango',   p:'Langostino',  v:13000,spicy:1,desc:'Langostino apanado en panko, rocoto mayo, ralladura de limón, cebolla crispy.'},
+  {n:'Acevichado',     wa:'Acevichado',     p:'Pesca blanca',v:13000,spicy:0,desc:'Pesca blanca, palta, salsa acevichada nikkei, maíz cancha.'},
+  {n:'Krein',          wa:'Krein',          p:'Pesca blanca',v:13000,spicy:0,desc:'Tartar de pesca blanca, negui, salsa krein, migas de tempura.'},
+  {n:'Shiro',          wa:'Shiro',          p:'Pesca blanca',v:13000,spicy:0,desc:'Pesca blanca, crema de palta, salsa miso, togarashi, cebollín.'},
+  {n:'NY',             wa:'NY',             p:'Salmon',      v:10000,spicy:0,desc:'Salmon, palta, sesamo.'},
+  {n:'Phila',          wa:'Phila',          p:'Salmon',      v:10000,spicy:0,desc:'Salmon, palta, queso crema, sesamo.'},
+  {n:'Chalaco',        wa:'Chalaco',        p:'Trucha',      v:13000,spicy:0,desc:'Trucha, palta, salsa aji amarillo, chalaquita.'},
+  {n:'Hot Trucha 🌶',  wa:'Hot Trucha',     p:'Trucha',      v:13000,spicy:1,desc:'Trucha, queso crema, salsa kwepie picante.'},
+  {n:'Maracuyá',       wa:'Maracuya',       p:'Trucha',      v:13000,spicy:0,desc:'Trucha, queso crema, salsa agridulce de maracuyá, masa filo crocante.'},
+  {n:'Porto',          wa:'Porto',          p:'Veggie',      v:13000,spicy:0,desc:'Portobello glaseado en tare, queso crema, pepino, sesamo.'},
+  {n:'Tempura',        wa:'Tempura',        p:'Veggie',      v:10000,spicy:0,desc:'Tempura verduras de estacion, queso crema, salsa thai, mani crocante, lima.'},
 ]
 const NIGIRIS_BASE=[
-  {n:'Trucha Chalaquita',    wa:'Trucha Chalaquita',    p:'Trucha',      v:2500,spicy:0,desc:'Trucha, ají amarillo nikkei, chalaquita criolla'},
-  {n:'Trucha Flambeada',     wa:'Trucha Flambeada',     p:'Trucha',      v:2500,spicy:0,desc:'Trucha flambeada, salsa tare'},
-  {n:'Trucha Filo Maracuyá', wa:'Trucha Filo Maracuya', p:'Trucha',      v:2500,spicy:0,desc:'Trucha, reducción de maracuyá, masa filo crocante'},
-  {n:'Trucha Trufa Lima',    wa:'Trucha Trufa Lima',    p:'Trucha',      v:2500,spicy:0,desc:'Trucha, aceite de trufa negra, ralladura de lima'},
-  {n:'Pesca Rocoto 🌶',      wa:'Pesca Rocoto',         p:'Pesca blanca',v:2500,spicy:1,desc:'Pesca blanca, rocoto mayo, hilos de cebolla frita'},
-  {n:'Pesca Kimchi',         wa:'Pesca Kimchi',         p:'Pesca blanca',v:2500,spicy:0,desc:'Pesca blanca, kimchi mayo, furikake'},
-  {n:'Pesca Acevichada',     wa:'Pesca Acevichada',     p:'Pesca blanca',v:2500,spicy:0,desc:'Pesca blanca, salsa acevichada, maíz crocante'},
-  {n:'Langostino',           wa:'Langostino',           p:'Langostino',  v:2500,spicy:0,desc:'Langostino, teriyaki, negui'},
-  {n:'Ikura',                wa:'Ikura',                p:'Ikura',       v:2500,spicy:0,desc:'Shari, banda de nori, imitación de huevas de salmón'},
+  {n:'Gunkan Ikura',    wa:'Gunkan Ikura',    p:'Ikura',       v:3000,spicy:0,desc:'Huevas a base de extractos de algas marinas.'},
+  {n:'Langostino',      wa:'Langostino',      p:'Langostino',  v:2500,spicy:0,desc:'Langostino, salsa miso, togarashi.'},
+  {n:'Pesca Acevichada',wa:'Pesca Acevichada',p:'Pesca blanca',v:2500,spicy:0,desc:'Pesca blanca, salsa cevichada, maiz, brotes cilantro.'},
+  {n:'Pesca Chalaca',   wa:'Pesca Chalaca',   p:'Pesca blanca',v:2500,spicy:0,desc:'Pesca blanca, ají amarillo, chalaquita.'},
+  {n:'Pesca Rocoto 🌶', wa:'Pesca Rocoto',    p:'Pesca blanca',v:2500,spicy:1,desc:'Pesca blanca, rocoto mayo, ralladura de limón.'},
+  {n:'Trucha Flambeada',wa:'Trucha Flambeada',p:'Trucha',      v:2500,spicy:0,desc:'Trucha flambeada, salsa tare, negui.'},
+  {n:'Trucha Nikiri',   wa:'Trucha Nikiri',   p:'Trucha',      v:2500,spicy:0,desc:'Trucha, salsa Nikiri.'},
+  {n:'Trucha Trufada',  wa:'Trucha Trufada',  p:'Trucha',      v:2500,spicy:0,desc:'Trucha, trufa, lima.'},
+  {n:'Trucha Yakumi',   wa:'Trucha Yakumi',   p:'Trucha',      v:2500,spicy:0,desc:'Trucha, yakumi.'},
 ]
 
 // Apply saved prices and custom recipes from admin
@@ -838,4 +839,11 @@ function dentroDeZona(lat,lng){
 }
 </script>
 </body>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    reg.update()
+  })
+}
+</script>
 </html>
