@@ -2565,10 +2565,10 @@ function updateInsumo(key, val){
 
 function exportarInsumosCSV(){
   const hidden = new Set(JSON.parse(localStorage.getItem('raco_ins_hidden')||'[]'))
-  let csv = '\uFEFFIngrediente;Unidad;Precio por g ($);Categoria\n'
-  const exported = new Set() // track to avoid duplicates
+  // key column lets users rename without breaking recipes
+  let csv = '\uFEFFIngrediente;Unidad;Precio por g ($);Categoria;key\n'
+  const exported = new Set()
 
-  // Standard groups (visible only)
   INSUMOS_GRUPOS.forEach(grupo => {
     grupo.keys.forEach(k => {
       if(!INSUMOS_BASE[k] || hidden.has(k) || exported.has(k)) return
@@ -2576,17 +2576,16 @@ function exportarInsumosCSV(){
       const precio = (Math.round(getP(k)*10)/10).toFixed(1)
       const nombre = ins.n.replace(/;/g,'')
       const cat = ins.cat || grupo.titulo.replace(/[^a-záéíóúñA-ZÁÉÍÓÚÑ0-9 ]/g,'').replace(/  +/g,' ').trim()
-      csv += `${nombre};${ins.unit};${precio};${cat}\n`
+      csv += `${nombre};${ins.unit};${precio};${cat};${k}\n`
       exported.add(k)
     })
   })
-  // Custom ingredients (visible only)
   const allStdKeys = INSUMOS_GRUPOS.flatMap(g=>g.keys)
   Object.keys(INSUMOS_BASE).filter(k=>!allStdKeys.includes(k)&&!hidden.has(k)&&!exported.has(k)).forEach(k=>{
     const ins = INSUMOS_BASE[k]
     const precio = (Math.round(getP(k)*10)/10).toFixed(1)
     const cat = ins.cat || 'Personalizados'
-    csv += `${ins.n};${ins.unit||''};${precio};${cat}\n`
+    csv += `${ins.n};${ins.unit||''};${precio};${cat};${k}\n`
     exported.add(k)
   })
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'})
@@ -2619,30 +2618,41 @@ function importarInsumosCSV(input){
     Object.keys(INSUMOS_BASE).forEach(k => delete INSUMOS_BASE[k].cat)
     const newCustom = {}
 
+    const header = lines[0].split(SEP).map(h=>h.trim().toLowerCase())
+    const keyCol = header.indexOf('key')  // -1 if old format
+
     lines.slice(1).forEach(line => {
       const parts = line.split(SEP)
       if(parts.length < 3) return
-      const nombre = parts[0].trim()
-      const unidad = parts[1]?.trim() || 'kg'
+      const nombre  = parts[0].trim()
+      const unidad  = parts[1]?.trim() || 'kg'
       const precioStr = parts[2].trim().replace(',','.')
-      const precio = parseFloat(precioStr)
-      const cat = parts[3]?.trim() || 'Personalizados'
+      const precio  = parseFloat(precioStr)
+      const cat     = parts[3]?.trim() || 'Personalizados'
+      const csvKey  = keyCol >= 0 ? parts[keyCol]?.trim() : ''
       if(!nombre || isNaN(precio) || precio <= 0) return
 
-      // Match existing key by name
-      let key = Object.keys(INSUMOS_BASE).find(k =>
-        INSUMOS_BASE[k].n.replace(/[,;]/g,'').toLowerCase() === nombre.toLowerCase()
-      )
+      // Priority: key column > name match
+      let key = csvKey && INSUMOS_BASE[csvKey] ? csvKey : null
+      if(!key){
+        key = Object.keys(INSUMOS_BASE).find(k =>
+          INSUMOS_BASE[k].n.replace(/[,;]/g,'').toLowerCase() === nombre.toLowerCase()
+        )
+      }
 
       if(key){
-        // Update price and categoria on existing
-        localStorage.setItem('raco_ins_'+key, precio)
+        // Update name (rename support), price, category, unit
+        INSUMOS_BASE[key].n = nombre
         INSUMOS_BASE[key].cat = cat
         INSUMOS_BASE[key].unit = unidad
-        // Persist cat override — tracked in memory during this import, saved at end
+        localStorage.setItem('raco_ins_'+key, precio)
+        // Update custom storage if it's a custom key
+        if(newCustom[key] !== undefined || !INSUMOS_GRUPOS.flatMap(g=>g.keys).includes(key)){
+          newCustom[key] = {n:nombre, pg:precio, unit:unidad, cat}
+        }
       } else {
-        // New ingredient — generate key
-        key = nombre.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')
+        // Truly new ingredient
+        key = csvKey || nombre.toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'')
         INSUMOS_BASE[key] = {n:nombre, pg:precio, unit:unidad, cat}
         localStorage.setItem('raco_ins_'+key, precio)
         newCustom[key] = {n:nombre, pg:precio, unit:unidad, cat}
